@@ -89,7 +89,7 @@ class DeltaConv2d(DeltaModule):
         self.dilation = module.dilation
         self.groups = module.groups
 
-        assert module.padding_mode == "zeros"  # todo: support this later
+        assert module.padding_mode == "zeros"  # TODO: support this later
 
     def forward_func(self, inputs: Tensor, params: Conv2dParams):
         w = params["weight"]
