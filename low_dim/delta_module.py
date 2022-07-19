@@ -1,41 +1,45 @@
 from abc import ABC, abstractmethod
-from typing import Any, TypedDict
+from typing import TypedDict, Optional
 
 import numpy as np
 from torch import Tensor, nn
 from torch.nn import functional as F
 
 Params = dict[str, Tensor]
-Inputs = Tensor | tuple[Tensor, ...] | dict[str, Tensor]
+InputsOutputs = Tensor | tuple[Tensor, ...] | dict[str, Tensor]
 
 
 class DeltaModule(nn.Module, ABC):
-    def __init__(self, module: nn.Module, trainable: list[str]):
-        super(DeltaModule, self).__init__()
+    def __init__(self, module: nn.Module, trainable_params: list[str]):
+        super().__init__()
 
         params = module.named_parameters()
         params = {n: p.data for n, p in params}
 
-        for name in trainable:
+        for name in trainable_params:
             assert name in params
 
-        self.trainable_params_initial: Params = {n: params[n] for n in trainable}
+        self.trainable_params_initial: Params = {n: params[n] for n in trainable_params}
         self.constant_params: Params = {
-            n: params[n] for n in params if n not in trainable
+            n: params[n] for n in params if n not in trainable_params
         }
 
-        self.trainable_names = trainable
+        self.trainable_names = trainable_params
         self.trainable_shapes = {
             n: p.shape for n, p in self.trainable_params_initial.items()
         }
-        self.trainable_sizes = {n: s.numel() for n, s in self.trainable_shapes.items()}
-        self.trainable_size_idxs = np.cumsum(list(self.trainable_sizes.values()))
-        self.trainable_num_params = self.trainable_size_idxs[-1]
+        self.trainable_sizes: dict[str, int] = {
+            n: s.numel() for n, s in self.trainable_shapes.items()
+        }
+        self.trainable_size_idxs: dict[str, int] = np.cumsum(
+            list(self.trainable_sizes.values())
+        )
+        self.trainable_num_params: int = self.trainable_size_idxs[-1]
 
         self.trainable_params: Params = self.trainable_params_initial
 
     @abstractmethod
-    def forward_func(self, inputs: Inputs, params: Params) -> Any:
+    def forward_func(self, inputs: InputsOutputs, params: Params) -> InputsOutputs:
         pass
 
     def set_params(self, delta: Tensor) -> None:
@@ -51,7 +55,7 @@ class DeltaModule(nn.Module, ABC):
 
         self.trainable_params = params
 
-    def forward(self, inputs: Inputs) -> Any:
+    def forward(self, inputs: InputsOutputs) -> InputsOutputs:
         params = {**self.trainable_params, **self.constant_params}
         return self.forward_func(inputs, params)
 
@@ -61,13 +65,17 @@ class DeltaLinear(DeltaModule):
         weight: Tensor
         bias: Tensor
 
-    def __init__(self, module: nn.Linear, trainable: list[str]):
-        super(DeltaLinear, self).__init__(module, trainable)
+    def __init__(self, module: nn.Linear, trainable_params: Optional[list[str]] = None):
+        if trainable_params is None:
+            trainable_params = ["weight"]
+            if module.bias is not None:
+                trainable_params.append("bias")
+        super().__init__(module, trainable_params)
 
         self.in_features = module.in_features
         self.out_features = module.out_features
 
-    def forward_func(self, inputs: Tensor, params: LinearParams):
+    def forward_func(self, inputs: Tensor, params: LinearParams) -> Tensor:
         w = params["weight"]
         b = params["bias"] if "bias" in params else None
         return F.linear(input=inputs, weight=w, bias=b)
@@ -78,8 +86,12 @@ class DeltaConv2d(DeltaModule):
         weight: Tensor
         bias: Tensor
 
-    def __init__(self, module: nn.Conv2d, trainable: list[str]):
-        super(DeltaConv2d, self).__init__(module, trainable)
+    def __init__(self, module: nn.Conv2d, trainable_params: Optional[list[str]] = None):
+        if trainable_params is None:
+            trainable_params = ["weight"]
+            if module.bias is not None:
+                trainable_params.append("bias")
+        super().__init__(module, trainable_params)
 
         self.in_channels = module.in_channels
         self.out_channels = module.out_channels
@@ -91,7 +103,7 @@ class DeltaConv2d(DeltaModule):
 
         assert module.padding_mode == "zeros"  # TODO: support this later
 
-    def forward_func(self, inputs: Tensor, params: Conv2dParams):
+    def forward_func(self, inputs: Tensor, params: Conv2dParams) -> Tensor:
         w = params["weight"]
         b = params["bias"] if "bias" in params else None
         return F.conv2d(
@@ -103,3 +115,6 @@ class DeltaConv2d(DeltaModule):
             dilation=self.dilation,
             groups=self.groups,
         )
+
+
+# TODO: support other types of layers
