@@ -1,0 +1,1 @@
+from .fastfood import FastfoodWrapper

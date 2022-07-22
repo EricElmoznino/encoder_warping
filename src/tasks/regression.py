@@ -6,7 +6,7 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchmetrics import R2Score
 
-from low_dim.fastfood import FastfoodWrapper
+from low_dim import FastfoodWrapper
 
 Phase = Literal["train", "val", "test"]
 
