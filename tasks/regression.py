@@ -2,11 +2,10 @@ from typing import Literal
 
 import pytorch_lightning as pl
 import torch
+from low_dim import FastfoodWrapper
 from torch import nn, optim
 from torch.nn import functional as F
 from torchmetrics import R2Score
-
-from low_dim import FastfoodWrapper
 
 Phase = Literal["train", "val", "test"]
 
