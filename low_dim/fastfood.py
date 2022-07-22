@@ -42,7 +42,7 @@ class FastfoodWrapper(nn.Module):
                 assert isinstance(group, list), "layer_groups must be a list of lists"
 
         # Hide this from inspection by get_parameters()
-        model = deepcopy(model)
+        model = deepcopy(model).eval()
         self.model = [model]
 
         # Data attributes of the class
