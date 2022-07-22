@@ -63,6 +63,9 @@ class FastfoodWrapper(nn.Module):
         if layer_groups is not None:
             self.group_scalers = nn.Parameter(torch.ones(num_layer_groups))
 
+        # Flag for checking when to set the parameters
+        self.params_set = True
+
     def forward(self, x: Any) -> Any:
         """
         Set the parameters of the model using the FastFood transform
@@ -75,12 +78,17 @@ class FastfoodWrapper(nn.Module):
         Returns:
             Any: Original model's output.
         """
-        if self.training:
+        if self.training:  # During training the params are constantly updated
             self.set_params()
+            self.params_set = False
+        elif not self.params_set:  # During inference the params are only set once
+            self.set_params()
+            self.params_set = True
 
         # Pass through the model, by getting the module from a list self.model
         model = self.model[0]
         x = model(x)
+
         return x
 
     def set_params(self) -> None:
