@@ -61,13 +61,13 @@ class EncoderLinearTask(pl.LightningModule):
         self.update_metrics(y_pred, y_true, "test")
 
     def training_epoch_end(self, outputs):
-        self.log_metrics()
+        self.log_metrics("train")
 
     def validation_epoch_end(self, outputs):
-        self.log_metrics()
+        self.log_metrics("val")
 
     def test_on_epoch_end(self, outputs):
-        self.log_metrics()
+        self.log_metrics("test")
 
     def update_metrics(self, y_pred, y_true, phase: Phase):
         r2 = self.metrics_for_phase(phase)

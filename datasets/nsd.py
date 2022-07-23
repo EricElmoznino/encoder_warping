@@ -29,7 +29,7 @@ class NSDDataModule(pl.LightningDataModule):
         self.data_dir = data_dir
         self.train_transform = train_transform
         self.eval_transform = eval_transform
-        self.batch_size = batch_size
+        self.save_hyperparameters(["batch_size"])
 
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
@@ -45,13 +45,19 @@ class NSDDataModule(pl.LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(
+            self.train_dataset, batch_size=self.hparams.batch_size, num_workers=4
+        )
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(
+            self.val_dataset, batch_size=self.hparams.batch_size, num_workers=4
+        )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(
+            self.test_dataset, batch_size=self.hparams.batch_size, num_workers=4
+        )
 
 
 def get_nsd_dataset(

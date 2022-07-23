@@ -2,3 +2,8 @@
 .idea
 .ipynb_checkpoints
 */__pycache__
+
+saved_runs/*
+!saved_runs/.gitkeep
+tests/saved_runs/*
+!tests/saved_runs/.gitkeep
