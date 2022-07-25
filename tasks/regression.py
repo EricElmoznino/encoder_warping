@@ -66,7 +66,7 @@ class EncoderLinearTask(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         self.log_metrics("val")
 
-    def test_on_epoch_end(self, outputs):
+    def test_epoch_end(self, outputs):
         self.log_metrics("test")
 
     def update_metrics(self, y_pred, y_true, phase: Phase):

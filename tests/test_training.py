@@ -1,3 +1,5 @@
+import shutil
+
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
@@ -5,6 +7,8 @@ from tasks import EncoderLinearTask, EncoderWarpingTask
 from torch import nn
 from torch.utils.data import DataLoader
 from torchdata.datapipes.map import SequenceWrapper
+
+torch.manual_seed(27)
 
 
 class DummyDataModule(pl.LightningDataModule):
@@ -48,24 +52,28 @@ class DummyModel(nn.Module):
         return self.mlp(x)
 
 
-def test_encoder_linear_task():
-    data = DummyDataModule()
-    model = DummyModel(data.d_in)
-    task = EncoderLinearTask(
-        model=model,
-        representation_size=model.representation_size,
-        output_size=data.d_out,
-    )
+class TestEncoderLinearTask:
+    def test_encoder_linear_task(self):
+        data = DummyDataModule()
+        model = DummyModel(data.d_in)
+        task = EncoderLinearTask(
+            model=model,
+            representation_size=model.representation_size,
+            output_size=data.d_out,
+        )
 
-    trainer = pl.Trainer(
-        default_root_dir="tests/saved_runs/encoder_linear",
-        gpus=1 if torch.cuda.is_available() else 0,
-        max_epochs=100,
-        callbacks=[
-            ModelCheckpoint(monitor="val_r2", mode="max"),
-            EarlyStopping(monitor="val_r2", mode="max"),
-        ],
-    )
+        save_dir = "tests/saved_runs/encoder_linear"
+        shutil.rmtree(save_dir)
 
-    trainer.fit(task, datamodule=data)
-    results = trainer.test(datamodule=data, ckpt_path="best")
+        trainer = pl.Trainer(
+            default_root_dir=save_dir,
+            gpus=1 if torch.cuda.is_available() else 0,
+            max_epochs=100,
+            callbacks=[
+                ModelCheckpoint(monitor="val_r2", mode="max"),
+                EarlyStopping(monitor="val_r2", mode="max"),
+            ],
+        )
+
+        trainer.fit(task, datamodule=data)
+        results = trainer.test(datamodule=data, ckpt_path="best")
