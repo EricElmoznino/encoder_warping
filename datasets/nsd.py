@@ -20,28 +20,39 @@ ImageTransform = Callable[[Image.Image], torch.Tensor]
 class NSDDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        data_dir: str,
+        nsd_dir: str,
+        stimuli_dir: str,
         train_transform: ImageTransform | None = None,
         eval_transform: ImageTransform | None = None,
         batch_size: int = 64,
     ):
         super().__init__()
-        self.data_dir = data_dir
+        self.nsd_dir = nsd_dir
+        self.stimuli_dir = stimuli_dir
         self.train_transform = train_transform
         self.eval_transform = eval_transform
-        self.save_hyperparameters(["batch_size"])
+        self.save_hyperparameters("batch_size")
 
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
             self.train_dataset = get_nsd_dataset(
-                self.data_dir, split="train", image_transform=self.train_transform
+                self.nsd_dir,
+                self.stimuli_dir,
+                split="train",
+                image_transform=self.train_transform,
             )
             self.val_dataset = get_nsd_dataset(
-                self.data_dir, split="val", image_transform=self.eval_transform
+                self.nsd_dir,
+                self.stimuli_dir,
+                split="val",
+                image_transform=self.eval_transform,
             )
         if stage in (None, "test"):
             self.test_dataset = get_nsd_dataset(
-                self.data_dir, split="test", image_transform=self.eval_transform
+                self.nsd_dir,
+                self.stimuli_dir,
+                split="test",
+                image_transform=self.eval_transform,
             )
 
     def train_dataloader(self) -> DataLoader:
@@ -61,7 +72,8 @@ class NSDDataModule(pl.LightningDataModule):
 
 
 def get_nsd_dataset(
-    data_dir: str,
+    nsd_dir: str,
+    stimuli_dir: str,
     split: Split,
     image_transform: ImageTransform | None = None,
 ) -> MapDataPipe:
@@ -74,15 +86,13 @@ def get_nsd_dataset(
             ]
         )
 
-    nsd_datapipe = NSDDataPipe(data_dir, split)
-    image_datapipe = ImageLoaderDataPipe(
-        os.path.join(data_dir, "stimuli"), nsd_datapipe.image_names
-    )
+    nsd_datapipe = NSDDataPipe(nsd_dir, split)
+    image_datapipe = ImageLoaderDataPipe(stimuli_dir, nsd_datapipe.image_names)
     image_datapipe = image_datapipe.map(image_transform)
     nsd_dataset = image_datapipe.zip(nsd_datapipe)
 
     if split == "train":
-        nsd_dataset = nsd_datapipe.shuffle()
+        nsd_dataset = nsd_dataset.shuffle()
 
     return nsd_dataset
 

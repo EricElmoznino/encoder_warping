@@ -1,4 +1,7 @@
+import os
 import shutil
+from attr import dataclass
+from pandas import lreshape
 
 import pytorch_lightning as pl
 import torch
@@ -52,8 +55,29 @@ class DummyModel(nn.Module):
         return self.mlp(x)
 
 
+def train(
+    run_name: str, task: EncoderLinearTask | EncoderWarpingTask, data: DummyDataModule
+) -> float:
+    save_dir = os.path.join("tests/saved_runs", run_name)
+    shutil.rmtree(save_dir, ignore_errors=True)
+
+    trainer = pl.Trainer(
+        default_root_dir=save_dir,
+        gpus=1 if torch.cuda.is_available() else 0,
+        max_epochs=100,
+        callbacks=[
+            ModelCheckpoint(monitor="val_r2", mode="max"),
+            EarlyStopping(monitor="val_r2", mode="max"),
+        ],
+    )
+
+    trainer.fit(task, datamodule=data)
+    results = trainer.test(datamodule=data, ckpt_path="best")
+    return results[0]["test_r2"]
+
+
 class TestEncoderLinearTask:
-    def test_encoder_linear_task(self):
+    def test_encoder_linear(self):
         data = DummyDataModule()
         model = DummyModel(data.d_in)
         task = EncoderLinearTask(
@@ -62,18 +86,57 @@ class TestEncoderLinearTask:
             output_size=data.d_out,
         )
 
-        save_dir = "tests/saved_runs/encoder_linear"
-        shutil.rmtree(save_dir)
+        test_r2 = train(run_name="encoder_linear", task=task, data=data)
+        assert test_r2 > 0.3
 
-        trainer = pl.Trainer(
-            default_root_dir=save_dir,
-            gpus=1 if torch.cuda.is_available() else 0,
-            max_epochs=100,
-            callbacks=[
-                ModelCheckpoint(monitor="val_r2", mode="max"),
-                EarlyStopping(monitor="val_r2", mode="max"),
-            ],
+
+class TestEncoderWarpingTask:
+    def test_encoder_warping(self):
+        data = DummyDataModule()
+        model = DummyModel(data.d_in)
+        task = EncoderWarpingTask(
+            model=model,
+            low_dim=data.d_out,
+            representation_size=model.representation_size,
+            output_size=data.d_out,
         )
 
-        trainer.fit(task, datamodule=data)
-        results = trainer.test(datamodule=data, ckpt_path="best")
+        test_r2 = train(run_name="encoder_warping", task=task, data=data)
+        assert test_r2 > 0.3
+
+    def test_encoder_warping_layer_groups(self):
+        data = DummyDataModule()
+        model = DummyModel(data.d_in)
+        task = EncoderWarpingTask(
+            model=model,
+            low_dim=data.d_out,
+            layer_groups=[["mlp.0"], ["mlp.1"]],
+            representation_size=model.representation_size,
+            output_size=data.d_out,
+        )
+
+        test_r2 = train(
+            run_name="encoder_warping_layer_groups",
+            task=task,
+            data=data,
+        )
+        assert test_r2 > 0.3
+
+    def test_encoder_warping_freeze_head(self):
+        data = DummyDataModule()
+        model = DummyModel(data.d_in)
+        task = EncoderWarpingTask(
+            model=model,
+            low_dim=model.representation_size,
+            freeze_head=True,
+            representation_size=model.representation_size,
+            output_size=data.d_out,
+            lr=1e-2,
+        )
+
+        test_r2 = train(
+            run_name="encoder_warping_freeze_head",
+            task=task,
+            data=data,
+        )
+        assert test_r2 > 0.01  # Very bad model, but still better than random
