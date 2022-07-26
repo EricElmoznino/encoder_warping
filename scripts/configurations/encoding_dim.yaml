@@ -9,4 +9,3 @@ dims:
   max: 10000
 
 run_name:
-debug: false

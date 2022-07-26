@@ -21,8 +21,7 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(save_dir)
 
     # Sweep through the low dimensionality range
-    n_samples = 3 if cfg.debug else cfg.dims.n_samples
-    low_dims = np.logspace(1, np.log10(cfg.dims.max), n_samples - 1)
+    low_dims = np.logspace(1, np.log10(cfg.dims.max), cfg.dims.n_samples - 1)
     low_dims = np.unique(low_dims.astype(int))
     low_dims = np.concatenate([[0], low_dims])
 
@@ -66,7 +65,6 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
         default_root_dir=save_dir,
         gpus=1 if torch.cuda.is_available() else 0,
         max_epochs=cfg.train.max_epochs,
-        overfit_batches=10 if cfg.debug else 0,
         callbacks=[
             ModelCheckpoint(monitor="val_r2", mode="max"),
             EarlyStopping(monitor="val_r2", mode="max"),
