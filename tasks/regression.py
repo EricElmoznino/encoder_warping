@@ -16,7 +16,7 @@ class EncoderLinearTask(pl.LightningModule):
         model: nn.Module,
         representation_size: int,
         output_size: int,
-        lr: float = 1e-2,
+        lr: float = 1e-3,
     ):
         super().__init__()
         self.save_hyperparameters(

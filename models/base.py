@@ -20,5 +20,5 @@ class BaseModelLayer(nn.Module, ABC):
         super().__init__()
         assert layer in self.permissible_layers
         self.layer = layer
-        self.output_size = self.layer_sizes[layer]
+        self.representation_size = self.layer_sizes[layer]
     

@@ -29,7 +29,7 @@ class TestResnet18:
                 output = model(transform(self.test_image).unsqueeze(dim=0))
 
             assert (output == reference_output[layer]).all()
-            assert np.prod(output.shape) == model.output_size
+            assert np.prod(output.shape) == model.representation_size
 
     def test_fastfood_output(self):
         model, layer_groups, transform = get_model("resnet18", "avgpool")

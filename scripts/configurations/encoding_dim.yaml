@@ -4,4 +4,9 @@ defaults:
   - data: nsd
   - _self_
 
+dims:
+  n_samples: 10
+  max: 10000
+
 run_name:
+debug: true
