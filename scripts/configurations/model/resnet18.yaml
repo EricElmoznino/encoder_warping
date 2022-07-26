@@ -1,0 +1,2 @@
+arch: resnet18
+layer: avgpool

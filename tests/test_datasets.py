@@ -14,10 +14,11 @@ class TestNSDDataModule:
         dm.setup(stage=None)
 
         assert (
-            len(dm.train_dataset) > 0
-            and len(dm.val_dataset) > 0
-            and len(dm.test_dataset) > 0
+            len(dm._train_dataset) > 0
+            and len(dm._val_dataset) > 0
+            and len(dm._test_dataset) > 0
         )
+        assert dm._n_outputs > 1
 
     def test_shapes_and_types(self):
         dm = NSDDataModule(nsd_dir, nsd_stimuli_dir)

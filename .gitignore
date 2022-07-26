@@ -1,7 +1,10 @@
 .vscode
 .idea
 .ipynb_checkpoints
+.pytest_cache
 */__pycache__
+
+outputs
 
 saved_runs/*
 !saved_runs/.gitkeep

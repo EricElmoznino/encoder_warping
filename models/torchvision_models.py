@@ -1,18 +1,13 @@
-from typing import Callable
-
-from PIL import Image
 import torch
 from torch import nn
 from torchvision.models import resnet18, ResNet18_Weights
-from torchvision.transforms import Compose
-
-LayerGroups = list[list[str]]
-ImageTransform = Callable[[Image.Image], torch.Tensor]
+from .typing import LayerGroups, ImageTransform
+from .base import BaseModelLayer
 
 
 def get_resnet18_torchvision(
     layer: str,
-) -> tuple[nn.Module, LayerGroups, ImageTransform]:
+) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
     assert layer in ResNet18Layer.permissible_layers
     weights = ResNet18_Weights.IMAGENET1K_V1
 
@@ -27,7 +22,7 @@ def get_resnet18_torchvision(
     return model, layer_groups, image_transform
 
 
-class ResNet18Layer(nn.Module):
+class ResNet18Layer(BaseModelLayer):
 
     permissible_layers = [
         "maxpool",
@@ -38,10 +33,17 @@ class ResNet18Layer(nn.Module):
         "avgpool",
     ]
 
-    def __init__(self, layer: str, weights=None):
-        super().__init__()
-        assert layer in self.permissible_layers
-        self.layer = layer
+    layer_sizes = {
+        "maxpool": 200704,
+        "layer1": 200704,
+        "layer2": 100352,
+        "layer3": 50176,
+        "layer4": 25088,
+        "avgpool": 512,
+    }
+
+    def __init__(self, layer: str, weights=None) -> None:
+        super().__init__(layer, weights)
 
         base = resnet18(weights=weights)
         layer_idx = self.permissible_layers.index(layer)

@@ -1,0 +1,7 @@
+defaults:
+  - train: defaults
+  - model: resnet18
+  - data: nsd
+  - _self_
+
+run_name:

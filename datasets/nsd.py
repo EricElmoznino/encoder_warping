@@ -2,13 +2,12 @@ import os
 from typing import Callable, Literal
 
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 import xarray as xr
 from PIL import Image
-from torch.utils.data import DataLoader
 from torchdata.datapipes.map import MapDataPipe
 from torchvision import transforms
+from .base import BaseDataModule
 
 from datasets.utils import ImageLoaderDataPipe
 
@@ -17,7 +16,7 @@ Stage = Literal["fit", "test"] | None
 ImageTransform = Callable[[Image.Image], torch.Tensor]
 
 
-class NSDDataModule(pl.LightningDataModule):
+class NSDDataModule(BaseDataModule):
     def __init__(
         self,
         nsd_dir: str,
@@ -25,50 +24,51 @@ class NSDDataModule(pl.LightningDataModule):
         train_transform: ImageTransform | None = None,
         eval_transform: ImageTransform | None = None,
         batch_size: int = 64,
-    ):
-        super().__init__()
+        num_workers: int = 4,
+    ) -> None:
+        super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.nsd_dir = nsd_dir
         self.stimuli_dir = stimuli_dir
         self.train_transform = train_transform
         self.eval_transform = eval_transform
-        self.save_hyperparameters("batch_size")
 
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
-            self.train_dataset = get_nsd_dataset(
+            self._train_dataset, _ = get_nsd_dataset(
                 self.nsd_dir,
                 self.stimuli_dir,
                 split="train",
                 image_transform=self.train_transform,
             )
-            self.val_dataset = get_nsd_dataset(
+            self._val_dataset, self._n_outputs = get_nsd_dataset(
                 self.nsd_dir,
                 self.stimuli_dir,
                 split="val",
                 image_transform=self.eval_transform,
             )
         if stage in (None, "test"):
-            self.test_dataset = get_nsd_dataset(
+            self._test_dataset, self._n_outputs = get_nsd_dataset(
                 self.nsd_dir,
                 self.stimuli_dir,
                 split="test",
                 image_transform=self.eval_transform,
             )
 
-    def train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.train_dataset, batch_size=self.hparams.batch_size, num_workers=4
-        )
+    @property
+    def n_outputs(self):
+        return self._n_outputs
 
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.val_dataset, batch_size=self.hparams.batch_size, num_workers=4
-        )
+    @property
+    def train_dataset(self):
+        return self._train_dataset
 
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.test_dataset, batch_size=self.hparams.batch_size, num_workers=4
-        )
+    @property
+    def val_dataset(self):
+        return self._val_dataset
+
+    @property
+    def test_dataset(self):
+        return self._test_dataset
 
 
 def get_nsd_dataset(
@@ -76,7 +76,7 @@ def get_nsd_dataset(
     stimuli_dir: str,
     split: Split,
     image_transform: ImageTransform | None = None,
-) -> MapDataPipe:
+) -> tuple[MapDataPipe, int]:
     if image_transform is None:
         image_transform = transforms.Compose(
             [
@@ -94,7 +94,7 @@ def get_nsd_dataset(
     if split == "train":
         nsd_dataset = nsd_dataset.shuffle()
 
-    return nsd_dataset
+    return nsd_dataset, nsd_datapipe.n_voxels
 
 
 class NSDDataPipe(MapDataPipe):
@@ -134,6 +134,7 @@ class NSDDataPipe(MapDataPipe):
         voxels = voxels.drop("shared")
 
         self.voxels = voxels
+        self.n_voxels = voxels.sizes["neuroid"]
 
     def __len__(self) -> int:
         return len(self.voxels)

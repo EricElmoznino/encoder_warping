@@ -1,6 +1,7 @@
+import numpy as np
 import torch
 from low_dim import FastfoodWrapper
-from models import get_resnet18_torchvision
+from models import get_model
 from PIL import Image
 from torchvision.models import ResNet18_Weights, resnet18
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -23,14 +24,15 @@ class TestResnet18:
         reference_output["avgpool"] = reference_output["avgpool"].flatten(1)
 
         for layer in self.layers:
-            model, _, transform = get_resnet18_torchvision(layer)
+            model, _, transform = get_model("resnet18", layer)
             with torch.no_grad():
                 output = model(transform(self.test_image).unsqueeze(dim=0))
 
             assert (output == reference_output[layer]).all()
+            assert np.prod(output.shape) == model.output_size
 
     def test_fastfood_output(self):
-        model, layer_groups, transform = get_resnet18_torchvision("avgpool")
+        model, layer_groups, transform = get_model("resnet18", "avgpool")
         ff_model = FastfoodWrapper(model, low_dim=50, layer_groups=layer_groups)
         with torch.no_grad():
             output = model(transform(self.test_image).unsqueeze(dim=0))
@@ -39,7 +41,7 @@ class TestResnet18:
         assert (output == ff_output).all()
 
     def test_fastfood_grad(self):
-        model, layer_groups, transform = get_resnet18_torchvision("avgpool")
+        model, layer_groups, transform = get_model("resnet18", "avgpool")
         model = FastfoodWrapper(model, low_dim=50, layer_groups=layer_groups)
         output = model(transform(self.test_image).unsqueeze(dim=0))
         output.sum().backward()
