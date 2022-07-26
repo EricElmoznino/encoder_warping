@@ -66,7 +66,7 @@ class FastfoodWrapper(nn.Module):
             self.group_scalers = nn.Parameter(torch.ones(num_layer_groups))
 
         # Flag for checking when to set the parameters
-        self.params_set = True
+        self.params_set = False
 
     def forward(self, x: Any) -> Any:
         """
