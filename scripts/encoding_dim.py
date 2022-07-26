@@ -36,7 +36,7 @@ def main(cfg: DictConfig) -> None:
 
 
 def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
-    save_dir = f"{save_dir}/{low_dim}"
+    save_dir = f"{save_dir}/low_dim={low_dim}"
 
     model, layer_groups, image_transform = get_model(cfg.model.arch, cfg.model.layer)
     datamodule = get_datamodule(
