@@ -47,11 +47,13 @@ class FastfoodWrapper(nn.Module):
 
         # Data attributes of the class
         self.low_dim = low_dim
-        self.param_replacements = [
-            ParamReplacement(model, param, param_name, layer_groups)
-            for param_name, param in dict(model.named_parameters()).items()
-            if param.requires_grad
-        ]
+        self.param_replacements = nn.ModuleList(
+            [
+                ParamReplacement(model, param, param_name, layer_groups)
+                for param_name, param in dict(model.named_parameters()).items()
+                if param.requires_grad
+            ]
+        )
 
         # Parameter vector that is updated
         # Initialized with zeros as per text: \theta^{d}
