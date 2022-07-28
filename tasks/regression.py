@@ -96,6 +96,7 @@ class EncoderWarpingTask(EncoderLinearTask):
         *args,
         low_dim: int,
         layer_groups: list[list[str]] | None = None,
+        low_dim_lr: float | None = None,
         freeze_head: bool = False,
         **kwargs,
     ):
@@ -115,8 +116,17 @@ class EncoderWarpingTask(EncoderLinearTask):
         return x
 
     def configure_optimizers(self):
-        if self.hparams.freeze_head:
-            params = self.model.parameters()
+        optimizers = []
+
+        if self.hparams.low_dim_lr is None:
+            low_dim_lr = self.hparams.lr
         else:
-            params = self.parameters()
-        return optim.SGD(params, lr=self.hparams.lr)
+            low_dim_lr = self.hparams.low_dim_lr
+        optimizers.append(optim.Adam(self.model.parameters(), lr=low_dim_lr))
+
+        if not self.hparams.freeze_head:
+            optimizers.append(
+                optim.Adam(self.output_head.parameters(), lr=self.hparams.lr)
+            )
+
+        return optimizers
