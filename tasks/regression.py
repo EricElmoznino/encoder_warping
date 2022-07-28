@@ -37,7 +37,7 @@ class EncoderLinearTask(pl.LightningModule):
         x = self.output_head(x)
         return x
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx, optimizer_idx):
         x, y_true = batch
         y_pred = self.forward(x)
 
