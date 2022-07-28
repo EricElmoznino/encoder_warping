@@ -13,7 +13,7 @@ from tasks import EncoderLinearTask, EncoderWarpingTask
 from scripts.utils import get_datamodule
 
 
-@hydra.main(config_path="configurations", config_name="encoding_dim")
+@hydra.main(version_base=None, config_path="configurations", config_name="encoding_dim")
 def main(cfg: DictConfig) -> None:
     # Create save directory
     save_dir = f"saved_runs/encoding_dim/{cfg.run_name}"

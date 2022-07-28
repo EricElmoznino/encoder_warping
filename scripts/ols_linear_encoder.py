@@ -15,7 +15,9 @@ from scripts.utils import get_datamodule
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-@hydra.main(config_path="configurations", config_name="ols_linear_encoder")
+@hydra.main(
+    version_base=None, config_path="configurations", config_name="ols_linear_encoder"
+)
 def main(cfg: DictConfig) -> None:
     # Create save directory
     save_dir = f"saved_runs/ols_linear_encoder"
