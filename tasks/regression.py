@@ -37,7 +37,7 @@ class EncoderLinearTask(pl.LightningModule):
         x = self.output_head(x)
         return x
 
-    def training_step(self, batch, batch_idx, optimizer_idx=None):
+    def training_step(self, batch, batch_idx):
         x, y_true = batch
         y_pred = self.forward(x)
 
@@ -109,11 +109,25 @@ class EncoderWarpingTask(EncoderLinearTask):
             model=self.model, low_dim=low_dim, layer_groups=layer_groups
         )
 
+        self.automatic_optimization = False
+
     def forward(self, x):
         x = self.model(x)
         x = x.view(x.shape[0], -1)
         x = self.output_head(x)
         return x
+
+    def training_step(self, batch, batch_idx):
+        loss = super().training_step(batch, batch_idx)
+
+        optimizers = self.optimizers()
+        for optimizer in optimizers:
+            optimizer.zero_grad()
+        self.manual_backward(loss)
+        for optimizer in optimizers:
+            optimizer.step()
+
+        return loss
 
     def configure_optimizers(self):
         optimizers = []
