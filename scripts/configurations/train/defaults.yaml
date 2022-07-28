@@ -1,4 +1,4 @@
 lr: 1e-3
 batch_size: 64
-num_workers: 4
+num_workers: 8
 max_epochs: 100

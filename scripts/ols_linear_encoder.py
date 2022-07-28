@@ -39,9 +39,9 @@ def main(cfg: DictConfig) -> None:
 
     # Get performance on all dataset splits
     with torch.no_grad():
-        train_r2 = r2_score(encoder(x_train), y_train)
-        val_r2 = r2_score(encoder(x_val), y_val)
-        test_r2 = r2_score(encoder(x_test), y_test)
+        train_r2 = r2_score(encoder(x_train), y_train).item()
+        val_r2 = r2_score(encoder(x_val), y_val).item()
+        test_r2 = r2_score(encoder(x_test), y_test).item()
 
     # Save results
     results = pd.DataFrame(
@@ -51,7 +51,7 @@ def main(cfg: DictConfig) -> None:
 
 
 def ols_linear_encoder(x: torch.Tensor, y: torch.Tensor) -> nn.Module:
-    x = torch.concat([x, torch.ones(x.shape[0], 1)], dim=1)
+    x = torch.concat([x, torch.ones(x.shape[0], 1, device=x.device)], dim=1)
     w = torch.pinverse(x) @ y
     w, b = w[:-1], w[-1]
 
