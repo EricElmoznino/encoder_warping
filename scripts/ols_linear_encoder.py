@@ -4,6 +4,7 @@ import shutil
 
 import hydra
 import pandas as pd
+from tqdm import tqdm
 import torch
 from torch import nn
 import pytorch_lightning as pl
@@ -27,10 +28,11 @@ def main(cfg: DictConfig) -> None:
     # Get model and datasets
     model, _, image_transform = get_model(cfg.model.arch, cfg.model.layer)
     model = model.to(device)
-    dm = get_datamodule(cfg, image_transform, image_transform)
+    datamodule = get_datamodule(cfg, image_transform, image_transform)
+    datamodule.setup(stage=None)
 
     # Get the activations and labels
-    x_train, x_val, x_test, y_train, y_val, y_test = get_data(model, dm)
+    x_train, x_val, x_test, y_train, y_val, y_test = get_data(model, datamodule)
 
     # Get the trained encoder
     encoder = ols_linear_encoder(x_train, y_train)
@@ -65,16 +67,21 @@ def get_data(model: nn.Module, dm: pl.LightningDataModule) -> tuple[torch.Tensor
         dl: torch.utils.data.DataLoader,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         x, y = [], []
-        for x_batch, y_batch in dl:
+        for x_batch, y_batch in tqdm(dl, desc="Getting activations"):
             x_batch, y_batch = x_batch.to(device), y_batch.to(device)
             with torch.no_grad():
                 x_batch = model(x_batch)
             x.append(x_batch)
             y.append(y_batch)
         x, y = torch.cat(x, dim=0), torch.cat(y, dim=0)
+        return x, y
 
     x_train, y_train = get_activations_and_labels(dm.train_dataloader())
     x_val, y_val = get_activations_and_labels(dm.val_dataloader())
     x_test, y_test = get_activations_and_labels(dm.test_dataloader())
 
     return x_train, x_val, x_test, y_train, y_val, y_test
+
+
+if __name__ == "__main__":
+    main()
