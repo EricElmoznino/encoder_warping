@@ -75,7 +75,7 @@ class EncoderLinearTask(pl.LightningModule):
 
     def log_metrics(self, phase: Phase):
         r2 = self.metrics_for_phase(phase)
-        self.log(f"{phase}_r2", r2.compute())
+        self.log(f"{phase}_r2", r2.compute(), prog_bar=True)
         r2.reset()
 
     def metrics_for_phase(self, phase: Phase):
