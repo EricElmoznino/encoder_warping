@@ -76,7 +76,9 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
     test_r2 = trainer.test(datamodule=datamodule, ckpt_path="best")[0]["test_r2"]
 
     # Clear the model checkpoints to save disk space
-    shutil.rmtree(f"{save_dir}/checkpoints", ignore_errors=True)
+    shutil.rmtree(
+        f"{save_dir}/lightning_logs/version_0/version0/checkpoints", ignore_errors=True
+    )
 
     return test_r2
 
