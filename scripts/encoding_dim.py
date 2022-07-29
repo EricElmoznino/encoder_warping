@@ -69,7 +69,7 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
         max_epochs=cfg.train.max_epochs,
         callbacks=[
             ModelCheckpoint(monitor="val_r2", mode="max"),
-            EarlyStopping(monitor="val_r2", mode="max"),
+            EarlyStopping(monitor="val_r2", mode="max", min_delta=1.5e-4),
         ],
     )
 
