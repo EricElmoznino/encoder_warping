@@ -1,6 +1,6 @@
 defaults:
   - train: defaults
-  - model: resnet18
+  - model: m0
   - data: nsd
   - _self_
 

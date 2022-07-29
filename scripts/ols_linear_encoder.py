@@ -26,7 +26,9 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(save_dir)
 
     # Get model and datasets
-    model, _, image_transform = get_model(cfg.model.arch, cfg.model.layer)
+    model, _, image_transform = get_model(
+        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer
+    )
     model = model.to(device)
     datamodule = get_datamodule(cfg, image_transform, image_transform)
     datamodule.setup(stage=None)

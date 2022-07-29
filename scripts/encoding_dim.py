@@ -37,7 +37,9 @@ def main(cfg: DictConfig) -> None:
 def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
     save_dir = f"{save_dir}/low_dim={low_dim}"
 
-    model, layer_groups, image_transform = get_model(cfg.model.arch, cfg.model.layer)
+    model, layer_groups, image_transform = get_model(
+        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer
+    )
     datamodule = get_datamodule(
         cfg, image_transform, image_transform
     )  # TODO: Support training image transforms for data augmentation

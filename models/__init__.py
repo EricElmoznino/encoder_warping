@@ -4,9 +4,9 @@ from .typing import LayerGroups, ImageTransform
 
 
 def get_model(
-    architecture: str, layer: str
+    arch: str, dataset: str, task: str, layer: str
 ) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
-    if architecture == "resnet18":
+    if arch == "resnet18" and dataset == "imagenet" and task == "object_classification":
         return get_resnet18_torchvision(layer)
     else:
-        raise ValueError(f"Unknown architecture {architecture}")
+        raise ValueError(f"Unknown model: arch={arch}, dataset={dataset}, task={task}")

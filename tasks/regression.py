@@ -121,6 +121,8 @@ class EncoderWarpingTask(EncoderLinearTask):
         loss = super().training_step(batch, batch_idx)
 
         optimizers = self.optimizers()
+        if not isinstance(optimizers, list):
+            optimizers = [optimizers]
         for optimizer in optimizers:
             optimizer.zero_grad()
         self.manual_backward(loss)

@@ -24,7 +24,9 @@ class TestResnet18:
         reference_output["avgpool"] = reference_output["avgpool"].flatten(1)
 
         for layer in self.layers:
-            model, _, transform = get_model("resnet18", layer)
+            model, _, transform = get_model(
+                "resnet18", "imagenet", "object_classification", layer
+            )
             with torch.no_grad():
                 output = model(transform(self.test_image).unsqueeze(dim=0))
 
@@ -32,7 +34,9 @@ class TestResnet18:
             assert np.prod(output.shape) == model.representation_size
 
     def test_fastfood_output(self):
-        model, layer_groups, transform = get_model("resnet18", "avgpool")
+        model, layer_groups, transform = get_model(
+            "resnet18", "imagenet", "object_classification", "avgpool"
+        )
         ff_model = FastfoodWrapper(model, low_dim=50, layer_groups=layer_groups)
         with torch.no_grad():
             output = model(transform(self.test_image).unsqueeze(dim=0))
@@ -41,7 +45,9 @@ class TestResnet18:
         assert (output == ff_output).all()
 
     def test_fastfood_grad(self):
-        model, layer_groups, transform = get_model("resnet18", "avgpool")
+        model, layer_groups, transform = get_model(
+            "resnet18", "imagenet", "object_classification", "avgpool"
+        )
         model = FastfoodWrapper(model, low_dim=50, layer_groups=layer_groups)
         output = model(transform(self.test_image).unsqueeze(dim=0))
         output.sum().backward()

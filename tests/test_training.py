@@ -82,6 +82,7 @@ class TestEncoderLinearTask:
             model=model,
             representation_size=model.representation_size,
             output_size=data.d_out,
+            lr=0.1,
         )
 
         test_r2 = train(run_name="encoder_linear", task=task, data=data)
@@ -97,6 +98,7 @@ class TestEncoderWarpingTask:
             low_dim=data.d_out,
             representation_size=model.representation_size,
             output_size=data.d_out,
+            lr=0.1,
         )
 
         test_r2 = train(run_name="encoder_warping", task=task, data=data)
@@ -111,6 +113,7 @@ class TestEncoderWarpingTask:
             layer_groups=[["mlp.0"], ["mlp.1"]],
             representation_size=model.representation_size,
             output_size=data.d_out,
+            lr=0.1,
         )
 
         test_r2 = train(
