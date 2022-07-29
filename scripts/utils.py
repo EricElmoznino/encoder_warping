@@ -17,7 +17,7 @@ def get_datamodule(
         )
     elif cfg.data.name == "majaj":
         datamodule = MajajDataModule(
-            neural_dir=cfg.data.neural_dir,
+            data_path=cfg.data.data_path,
             stimuli_dir=cfg.data.stimuli_dir,
             roi=cfg.data.roi,
             train_transform=train_transform,

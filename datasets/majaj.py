@@ -13,7 +13,7 @@ from datasets.utils import ImageLoaderDataPipe
 class MajajDataModule(BaseDataModule):
     def __init__(
         self,
-        neural_dir: str,
+        data_path: str,
         stimuli_dir: str,
         roi: str,
         train_transform: ImageTransform | None = None,
@@ -22,7 +22,7 @@ class MajajDataModule(BaseDataModule):
         num_workers: int = 4,
     ) -> None:
         super().__init__(batch_size=batch_size, num_workers=num_workers)
-        self.neural_dir = neural_dir
+        self.data_path = data_path
         self.stimuli_dir = stimuli_dir
         self.roi = roi
         self.train_transform = train_transform
@@ -31,14 +31,14 @@ class MajajDataModule(BaseDataModule):
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
             self._train_dataset, _ = get_majaj_dataset(
-                self.neural_dir,
+                self.data_path,
                 self.stimuli_dir,
                 self.roi,
                 split="train",
                 image_transform=self.train_transform,
             )
             self._val_dataset, self._n_outputs = get_majaj_dataset(
-                self.neural_dir,
+                self.data_path,
                 self.stimuli_dir,
                 self.roi,
                 split="val",
@@ -46,7 +46,7 @@ class MajajDataModule(BaseDataModule):
             )
         if stage in (None, "test"):
             self._test_dataset, self._n_outputs = get_majaj_dataset(
-                self.neural_dir,
+                self.data_path,
                 self.stimuli_dir,
                 self.roi,
                 split="test",
@@ -71,7 +71,7 @@ class MajajDataModule(BaseDataModule):
 
 
 def get_majaj_dataset(
-    neural_dir: str,
+    data_path: str,
     stimuli_dir: str,
     roi: str,
     split: Split,
@@ -86,7 +86,7 @@ def get_majaj_dataset(
             ]
         )
 
-    majaj_datapipe = MajajDataPipe(neural_dir, roi, split)
+    majaj_datapipe = MajajDataPipe(data_path, roi, split)
     image_datapipe = ImageLoaderDataPipe(stimuli_dir, majaj_datapipe.image_names)
     image_datapipe = image_datapipe.map(image_transform)
     majaj_dataset = image_datapipe.zip(majaj_datapipe)
@@ -98,51 +98,43 @@ def get_majaj_dataset(
 
 
 class MajajDataPipe(MapDataPipe):
-    def __init__(self, data_dir: str, roi: str, split: Split):
+    def __init__(self, data_path: str, roi: str, split: Split):
         super().__init__()
 
-        self.data_dir = data_dir
+        self.data_path = data_path
         self.roi = roi
         self.split = split
 
-        neural = xr.load_dataarray(os.path.join(data_dir, "neural.nc"))
-        neural = neural.sel(neuroid=neural.region == roi)
-        neural = neural.drop([coord for coord in neural.coords if coord != "image_id"])
-
-        metadata = pd.read_csv(os.path.join(data_dir, "metadata.csv"))
-        metadata = metadata[["image_id", "filename", "object_name"]]
-        metadata = metadata.set_index("image_id")
-
-        neural["image_name"] = ("image_id", metadata.filename)
-        neural["object_name"] = ("image_id", metadata.object_name)
+        neurons = xr.load_dataarray(data_path)
+        neurons = neurons.sel(neuroid=neurons.region == roi)
 
         if split == "train":
-            neural = neural.isel(
-                image_id=slice(None, int(neural.sizes["image_id"] * 0.6))
+            neurons = neurons.isel(
+                image_id=slice(None, int(neurons.sizes["image_id"] * 0.6))
             )
         elif split == "val":
-            neural = neural.isel(
+            neurons = neurons.isel(
                 image_id=slice(
-                    int(neural.sizes["image_id"] * 0.6),
-                    int(neural.sizes["image_id"] * 0.8),
+                    int(neurons.sizes["image_id"] * 0.6),
+                    int(neurons.sizes["image_id"] * 0.8),
                 )
             )
         else:
-            neural = neural.isel(
-                image_id=slice(int(neural.sizes["image_id"] * 0.8), None)
+            neurons = neurons.isel(
+                image_id=slice(int(neurons.sizes["image_id"] * 0.8), None)
             )
 
-        self.neural = neural
-        self.n_neurons = neural.sizes["neuroid"]
+        self.neurons = neurons
+        self.n_neurons = neurons.sizes["neuroid"]
 
     def __len__(self) -> int:
-        return len(self.neural)
+        return len(self.neurons)
 
     def __getitem__(self, index) -> torch.Tensor:
-        neurons = self.neural.isel(image_id=index)
+        neurons = self.neurons.isel(image_id=index)
         neurons = torch.from_numpy(neurons.values)
         return neurons
 
     @property
     def image_names(self):
-        return self.neural.image_name.values.tolist()
+        return self.neurons.image_name.values.tolist()

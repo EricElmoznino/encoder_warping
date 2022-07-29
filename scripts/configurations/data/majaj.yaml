@@ -1,4 +1,4 @@
 name: majaj
-neural_dir: /home/eelmozn1/datasets/majaj
+data_path: /home/eelmozn1/datasets/majajhong2015.nc
 stimuli_dir: /data/shared/.cache/brainscore/brainio/image_dicarlo_hvm-public
 roi: IT
