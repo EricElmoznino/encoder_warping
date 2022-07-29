@@ -18,7 +18,8 @@ def main(cfg: DictConfig) -> None:
     # Create save directory
     if cfg.run_name is None:
         cfg.run_name = "_".join(
-            [f"dataset={cfg.data.name}"] + [f"{k}={v}" for k, v in cfg.model.items()]
+            [f"neural-data={cfg.data.name}"]
+            + [f"{k}={v}" for k, v in cfg.model.items()]
         )
     save_dir = f"saved_runs/encoding_dim/{cfg.run_name}"
     shutil.rmtree(save_dir, ignore_errors=True)
