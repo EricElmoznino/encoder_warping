@@ -1,0 +1,4 @@
+name: majaj
+neural_dir: /home/eelmozn1/datasets/majaj
+stimuli_dir: /data/shared/.cache/brainscore/brainio/image_dicarlo_hvm-public
+roi: IT

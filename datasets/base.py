@@ -1,7 +1,15 @@
-import pytorch_lightning as pl
-from torchdata.datapipes.map import MapDataPipe
-from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
+from typing import Callable, Literal
+
+import pytorch_lightning as pl
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader
+from torchdata.datapipes.map import MapDataPipe
+
+Split = Literal["train", "val", "test"]
+Stage = Literal["fit", "test"] | None
+ImageTransform = Callable[[Image.Image], torch.Tensor]
 
 
 class BaseDataModule(pl.LightningDataModule, ABC):
