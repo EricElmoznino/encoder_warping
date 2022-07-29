@@ -56,6 +56,7 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
             representation_size=model.representation_size,
             output_size=datamodule.n_outputs,
             lr=cfg.train.lr,
+            weight_decay=cfg.train.weight_decay,
         )
     else:
         task = EncoderWarpingTask(
@@ -65,6 +66,7 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
             representation_size=model.representation_size,
             output_size=datamodule.n_outputs,
             lr=cfg.train.lr,
+            weight_decay=cfg.train.weight_decay,
         )
 
     # Configure trainer

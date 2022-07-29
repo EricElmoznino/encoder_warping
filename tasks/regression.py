@@ -17,6 +17,7 @@ class EncoderLinearTask(pl.LightningModule):
         representation_size: int,
         output_size: int,
         lr: float = 1e-4,
+        weight_decay: float = 0.0,
     ):
         super().__init__()
         self.save_hyperparameters(
@@ -87,7 +88,11 @@ class EncoderLinearTask(pl.LightningModule):
             return self.r2_test
 
     def configure_optimizers(self):
-        return optim.Adam(self.output_head.parameters(), lr=self.hparams.lr)
+        return optim.Adam(
+            self.output_head.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
 
 
 class EncoderWarpingTask(EncoderLinearTask):
@@ -142,7 +147,11 @@ class EncoderWarpingTask(EncoderLinearTask):
 
         if not self.hparams.freeze_head:
             optimizers.append(
-                optim.Adam(self.output_head.parameters(), lr=self.hparams.lr)
+                optim.Adam(
+                    self.output_head.parameters(),
+                    lr=self.hparams.lr,
+                    weight_decay=self.hparams.weight_decay,
+                )
             )
 
         return optimizers
