@@ -21,7 +21,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 )
 def main(cfg: DictConfig) -> None:
     # Create save directory
-    save_dir = f"saved_runs/ols_linear_encoder"
+    run_name = "_".join(
+        [f"neural-data={cfg.data.name}_alpha={cfg.alpha}"]
+        + [f"{k}={v}" for k, v in cfg.model.items()]
+    )
+    save_dir = f"saved_runs/ols_linear_encoder/{run_name}"
     shutil.rmtree(save_dir, ignore_errors=True)
     os.makedirs(save_dir)
 
@@ -37,7 +41,7 @@ def main(cfg: DictConfig) -> None:
     x_train, x_val, x_test, y_train, y_val, y_test = get_data(model, datamodule)
 
     # Get the trained encoder
-    encoder = ols_linear_encoder(x_train, y_train)
+    encoder = ols_linear_encoder(x_train, y_train, cfg.alpha)
 
     # Get performance on all dataset splits
     with torch.no_grad():
@@ -52,9 +56,18 @@ def main(cfg: DictConfig) -> None:
     results.to_csv(f"{save_dir}/results.csv", index=False)
 
 
-def ols_linear_encoder(x: torch.Tensor, y: torch.Tensor) -> nn.Module:
+def ols_linear_encoder(
+    x: torch.Tensor, y: torch.Tensor, alpha: float | None = None
+) -> nn.Module:
+    if alpha is None:
+        alpha = 0.0
+
     x = torch.concat([x, torch.ones(x.shape[0], 1, device=x.device)], dim=1)
-    w = torch.pinverse(x) @ y
+    w = (
+        torch.inverse(x.T @ x + alpha * torch.eye(x.shape[1], device=x.device))
+        @ x.T
+        @ y
+    )
     w, b = w[:-1], w[-1]
 
     encoder = nn.Linear(w.shape[0], w.shape[1])
