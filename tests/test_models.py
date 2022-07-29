@@ -25,7 +25,7 @@ class TestResnet18:
 
         for layer in self.layers:
             model, _, transform = get_model(
-                "resnet18", "imagenet", "object_classification", layer
+                "resnet18", "imagenet", "object-classification", layer
             )
             with torch.no_grad():
                 output = model(transform(self.test_image).unsqueeze(dim=0))

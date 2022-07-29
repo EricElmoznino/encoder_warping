@@ -16,6 +16,8 @@ from scripts.utils import get_datamodule
 @hydra.main(version_base=None, config_path="configurations", config_name="encoding_dim")
 def main(cfg: DictConfig) -> None:
     # Create save directory
+    if cfg.run_name is None:
+        cfg.run_name = "_".join([f"{k}={v}" for k, v in cfg.model.items()])
     save_dir = f"saved_runs/encoding_dim/{cfg.run_name}"
     shutil.rmtree(save_dir, ignore_errors=True)
     os.makedirs(save_dir)
