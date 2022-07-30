@@ -19,7 +19,7 @@ class FastfoodWrapper(nn.Module):
         self,
         model: nn.Module,
         low_dim: int,
-        layer_groups: list[list[str]] | None = None,
+        layer_groups: list[str | list[str]] | None = None,
     ):
         """
         Wrapper to estimate the intrinsic dimensionality of the
@@ -38,8 +38,12 @@ class FastfoodWrapper(nn.Module):
             assert (
                 len(layer_groups) < low_dim
             ), "low_dim must be greater than the number of layer groups"
-            for group in layer_groups:
-                assert isinstance(group, list), "layer_groups must be a list of lists"
+            for i in range(len(layer_groups)):
+                assert isinstance(layer_groups[i], list) or isinstance(
+                    layer_groups[i], str
+                ), "layer_groups must be a list of lists"
+                if isinstance(layer_groups[i], str):
+                    layer_groups[i] = [layer_groups[i]]
 
         # Hide this from inspection by get_parameters()
         model = deepcopy(model).eval()
