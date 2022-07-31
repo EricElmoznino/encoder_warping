@@ -10,14 +10,13 @@ from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-target_function = lambda x: x**3
+target_function = lambda x: torch.sin(1.5 * x * np.pi / 2)
 initial_functions = [
     lambda x: x**2,
+    lambda x: x**3,
     lambda x: torch.sin(x * np.pi / 2),
-    lambda x: 2 * x**3,
-    lambda x: 2 * x**3 + 5 * x,
 ]
-low_dims = np.logspace(np.log10(4), 3, num=10).astype(int)
+low_dims = np.logspace(np.log10(4), 2, 7).astype(int)
 
 
 def get_batch(func: Callable[[np.ndarray], np.ndarray], batch_size: int) -> np.ndarray:
