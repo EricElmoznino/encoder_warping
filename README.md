@@ -1,7 +1,5 @@
 # Encoder warping
 
----
-
 Code for a project investigating the use of neural encoding models who's representations can nonlinearly to align with those of the neural data being predicted, where the degree of this warping can be controlled by only modifying the model's parameters in a low-dimensional subspace.
 
 ### Contents
@@ -24,8 +22,6 @@ Code for a project investigating the use of neural encoding models who's represe
     - [Preliminary results training one model at different $d$](#preliminary-results-training-one-model-at-different-d)
 
 # Project overview
-
----
 
 ### Problem description
 
@@ -52,8 +48,6 @@ This concept is illustrated in the figure below. Say we have some target represe
 ![](simulations/dim_complexity/saved_figures/dim_complexity_simulation.jpg)
 
 # Code structure
-
----
 
 ### `low_dim/`
 
@@ -100,8 +94,6 @@ Simulations implemented so far:
 Unit tests using the `pytest` library. *Please* try to add additional unit tests for new code that you write, and re-run existing tests if you change something in the classes/functions that are currently implemented.
 
 # Experiments
-
----
 
 ### TODO: $d$ for different encoding models
 
