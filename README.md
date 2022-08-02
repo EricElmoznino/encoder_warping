@@ -20,6 +20,8 @@ Code for a project investigating the use of neural encoding models who's represe
 - [Experiments](#experiments)
     - [TODO: $d$ for different encoding models](#todo-d-for-different-encoding-models)
     - [Preliminary results training one model at different $d$](#preliminary-results-training-one-model-at-different-d)
+- [Future ideas](#future-ideas)
+    - [Skip the linear encoding layer](#skip-the-linear-encoding-layer)
 
 # Project overview
 
@@ -111,3 +113,17 @@ In particular, we want to see if we learn something new by comparing models acco
 So far, I've trained a deep layer of an ImageNet-trained ResNet18 at various levels of $d$ on (a) the Natural Scenes Dataset and (b) the Majaj & Hong 2015 dataset used in BrainScore. Both used high-level object-recognition ROIs (IT, LOC). You can find the paths to these datasets in the default hydra configurations at `scripts/configurations/data/` (some of these paths will be in my local folder, so just ping me if you can't read from them and need me to copy them elsewhere).
 
 The results for these experiments are relatively encouraging. What I was looking for was whether or not higher values of $d$ tended to lead to better encoding performance, which is a pre-requisite for being able to compare models according to their $d$. This project will only work if different models eventually achieve the same encoding performance when $d$ is large enough, but reach some given threshold at very different values of $d$. So, we need some variance as a function of $d$ within a model, and ideally encoding performance should be increasing monotonically with $d$. By in large, this behavior has been observed, but the results are quite noisy (especially for NSD).
+
+# Future ideas
+
+### Skip the linear encoding layer
+
+Really, we want to see how complex a change we need to make to the model before its representations align with those of the brain. Currently, after changing the model's representations by tuning its internal parameters, we still have a linear encoding layer at the end to optimize an actual alignment. This complicates the validity of the method, because that linear layer itself has parameters (the number of which will also depend on how many units are in the model's final representation). 
+
+On the one hand, this kind of linear projection might be necessary given issues in the neural data such as limited numbers of stimuli, recordings from a limited number of brain regions, lossy/noisy recording modalities, subjects performing a single fixed task, etc.
+
+Nevertheless, if we want to see something like "how many parameters must change in the model to align it with the neural representations", perhaps we can skip the linear projection entirely and use a sort of RSA objective function to train the low-dimensional parameter embedding. Since RSA can be differentiable, we should be able to write a loss function for it that can be optimized using gradient descent. 
+
+Gradient descent methods would still be necessary because there's no other good way to optimize the DNN (i.e. we can't write a closed form solution for the optimal low-dimensional parameters). In addition, if the stimulus set is sufficiently large such that we can't pass it as an entire batch to the model and obtain gradients, we'll need an batched form of this RSA objective (although this might be as simple as just doing RSA on the current batch).
+
+Note that this batched RSA-like objective is similar to some loss functions used in contrastive learning, since it considers the distance between all pairs of samples in the batch, so it's probably a theoretically-sound thing to do.
