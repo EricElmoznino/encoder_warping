@@ -2,15 +2,11 @@
 .idea
 .ipynb_checkpoints
 .pytest_cache
-**/__pycache__
+__pycache__
 
 outputs
-
 saved_runs/*
-!saved_runs/.gitkeep
-
 tests/saved_runs/*
-!tests/saved_runs/.gitkeep
-
 simulations/*/saved_models/*
-!simulations/*/saved_models/.gitkeep
+
+!.gitkeep
