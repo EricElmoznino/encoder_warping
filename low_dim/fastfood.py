@@ -20,7 +20,7 @@ class FastfoodWrapper(nn.Module):
         model: nn.Module,
         low_dim: int,
         layer_groups: list[str | list[str]] | None = None,
-    ):
+    ) -> None:
         """
         Wrapper to estimate the intrinsic dimensionality of the
         objective landscape for a specific task given a specific model using FastFood transform

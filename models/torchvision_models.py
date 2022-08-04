@@ -8,6 +8,17 @@ from .base import BaseModelLayer
 def get_resnet18_torchvision(
     layer: str,
 ) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
+    """
+    Get the specified layer from a ResNet18 model trained on ImageNet classification.
+
+    Args:
+        layer (str): Name of the layers to retrieve from the model.
+
+    Returns:
+        tuple[BaseModelLayer, LayerGroups, ImageTransform]: A tuple containing the model,
+        layer groups for non-uniform scaling in the Fastfood transform, and image transform
+        to be applied to the input images.
+    """
     assert layer in ResNet18Layer.permissible_layers
     weights = ResNet18_Weights.IMAGENET1K_V1
 
@@ -43,7 +54,7 @@ class ResNet18Layer(BaseModelLayer):
     }
 
     def __init__(self, layer: str, weights=None) -> None:
-        super().__init__(layer, weights)
+        super().__init__(layer)
 
         base = resnet18(weights=weights)
         layer_idx = self.permissible_layers.index(layer)

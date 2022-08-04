@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import pytorch_lightning as pl
 import torch
@@ -6,11 +6,17 @@ from low_dim import FastfoodWrapper
 from torch import nn, optim
 from torch.nn import functional as F
 from torchmetrics import R2Score
+from models import LayerGroups
 
 Phase = Literal["train", "val", "test"]
 
 
 class EncoderLinearTask(pl.LightningModule):
+    """
+    PyTorch LightningModule representing a regression task
+    used to train a linear neural encoding model.
+    """
+
     def __init__(
         self,
         model: nn.Module,
@@ -18,7 +24,17 @@ class EncoderLinearTask(pl.LightningModule):
         output_size: int,
         lr: float = 1e-4,
         weight_decay: float = 0.0,
-    ):
+    ) -> None:
+        """
+        Initialize the task.
+
+        Args:
+            model (nn.Module): Candidate brain model (usually a deep neural network).
+            representation_size (int): Number of outputs from the model.
+            output_size (int): Number of targets.
+            lr (float, optional): Gradient descent. Defaults to 1e-4.
+            weight_decay (float, optional): L2 weight regularization strength. Defaults to 0.0.
+        """
         super().__init__()
         self.save_hyperparameters(
             ignore=["model", "representation_size", "output_size"]
@@ -31,7 +47,17 @@ class EncoderLinearTask(pl.LightningModule):
         self.r2_val = R2Score(num_outputs=output_size)
         self.r2_test = R2Score(num_outputs=output_size)
 
-    def forward(self, x):
+    def forward(self, x: Any) -> torch.Tensor:
+        """
+        Obtain the model's activations (without gradients)
+        and linearly project them to the output space.
+
+        Args:
+            x (Any): Input(s) to self.model.
+
+        Returns:
+            torch.Tensor: Predicted neural responses.
+        """
         with torch.no_grad():
             x = self.model(x)
         x = x.view(x.shape[0], -1)
@@ -70,16 +96,42 @@ class EncoderLinearTask(pl.LightningModule):
     def test_epoch_end(self, outputs):
         self.log_metrics("test")
 
-    def update_metrics(self, y_pred, y_true, phase: Phase):
+    def update_metrics(self, y_pred: torch.Tensor, y_true: torch.Tensor, phase: Phase):
+        """
+        Call whenever you want to incrementally update the
+        state of the internal metrics tracking performance.
+
+        Args:
+            y_pred (torch.Tensor): Predicted neural responses.
+            y_true (torch.Tensor): True neural responses.
+            phase (Phase): One of "train", "val", or "test".
+        """
         r2 = self.metrics_for_phase(phase)
         r2.update(y_pred, y_true)
 
     def log_metrics(self, phase: Phase):
+        """
+        Call whenever you want to compute and log the
+        the current internal metrics tracking performance.
+
+        Args:
+            phase (Phase): One of "train", "val", or "test".
+        """
         r2 = self.metrics_for_phase(phase)
         self.log(f"{phase}_r2", r2.compute(), prog_bar=True)
         r2.reset()
 
-    def metrics_for_phase(self, phase: Phase):
+    def metrics_for_phase(self, phase: Phase) -> R2Score:
+        """
+        Convenience function to get the R2Score object
+        based on the current phase of training.
+
+        Args:
+            phase (Phase): One of "train", "val", or "test".
+
+        Returns:
+            R2Score: R2Score object for the current phase of training.
+        """
         if phase == "train":
             return self.r2_train
         elif phase == "val":
@@ -96,15 +148,37 @@ class EncoderLinearTask(pl.LightningModule):
 
 
 class EncoderWarpingTask(EncoderLinearTask):
+    """
+    PyTorch LightningModule representing a regression task
+    used to train a nonlinear neural encoding model, where
+    the degree of nonlinear warping can be modulated by
+    varying the dimensionality of the parameter embedding
+    vector being trained.
+
+    See :class:`low_dim.FastfoodWrapper` for more details
+    on this nonlinear warping process.
+    """
+
     def __init__(
         self,
-        *args,
+        *args: list,
         low_dim: int,
-        layer_groups: list[list[str]] | None = None,
+        layer_groups: LayerGroups | None = None,
         low_dim_lr: float | None = None,
         freeze_head: bool = False,
-        **kwargs,
-    ):
+        **kwargs: dict,
+    ) -> None:
+        """
+        Initialize the task
+
+        Args:
+            *args (list): Positional arguments passed to superclass. See :class:`EncoderLinearTask`.
+            low_dim (int): Dimensionality of the low-dimensional parameter embedding vector being trained.
+            layer_groups (LayerGroups | None, optional): Layer groups that receive their own scaling parameters. Defaults to None.
+            low_dim_lr (float | None, optional): Separate learning rate for low-dimensional parameter embedding vector. Defaults to None, in which case the same learning rate is used as for the linear output head (self.hparams.lr).
+            freeze_head (bool, optional): If True, the output head is initialized with random weights and never trained. Defaults to False.
+            **kwargs (dict): Keyword arguments passed to superclass. See :class:`EncoderLinearTask`.
+        """
         super().__init__(*args, **kwargs)
         self.save_hyperparameters(
             ignore=["model", "representation_size", "output_size"]
@@ -114,9 +188,20 @@ class EncoderWarpingTask(EncoderLinearTask):
             model=self.model, low_dim=low_dim, layer_groups=layer_groups
         )
 
+        # Disable automatic PyTorch Lightning's automatic optimization so that we can efficiently
+        # use the model and head optimizers separately in the same call to self.training_step().
         self.automatic_optimization = False
 
     def forward(self, x):
+        """
+        Obtain the model's activations and linearly project them to the output space.
+
+        Args:
+            x (Any): Input(s) to self.model.
+
+        Returns:
+            torch.Tensor: Predicted neural responses.
+        """
         x = self.model(x)
         x = x.view(x.shape[0], -1)
         x = self.output_head(x)

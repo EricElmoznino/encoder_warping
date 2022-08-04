@@ -1,3 +1,17 @@
+"""
+Script that can be used to train toy models to fit a target function,
+while varying the level of complexity through the dimensionality
+of the model's trainable parameter embedding.
+
+Can run using the following command:
+`python -m simulations.dim_complexity.train_models`
+
+There are no command-line arguments for this simple script.
+Simply change the global variables indicated below.
+
+The results can be analyzed  in the `simulations/dim_complexity/figures.ipynb` notebook.
+"""
+
 import copy
 from typing import Callable
 
@@ -8,8 +22,10 @@ from torch import nn
 from torch.nn import functional as F
 from tqdm import tqdm
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+# Change the variables below to modify the simulation.
+# target_function: the target function to fit.
+# initial_functions: the starting point functions of the models.
+# low_dims: the low dimensional parameter embedding sizes to try.
 target_function = lambda x: torch.sin(1.5 * x * np.pi / 2)
 initial_functions = [
     lambda x: x**2,
@@ -18,16 +34,21 @@ initial_functions = [
 ]
 low_dims = np.logspace(np.log10(4), 2, 7).astype(int)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def get_batch(func: Callable[[np.ndarray], np.ndarray], batch_size: int) -> np.ndarray:
+
+def get_batch(
+    batch_size: int, func: Callable[[torch.Tensor], torch.Tensor]
+) -> torch.Tensor:
     x = torch.randn(batch_size, 1).to(device)
-    y = func(x)
+    with torch.no_grad():
+        y = func(x)
     return x, y
 
 
 def fit_to_func(
     model: nn.Module,
-    func: Callable[[np.ndarray], np.ndarray],
+    func: Callable[[torch.Tensor], torch.Tensor],
     lr: float = 1e-4,
     batch_size: int = 1000,
     threshold: float = 1e-5,
@@ -46,7 +67,7 @@ def fit_to_func(
     pbar = tqdm(range(max_steps))
     lowest_loss, patience_clock = np.inf, 0
     for step in pbar:
-        x, y = get_batch(func, batch_size)
+        x, y = get_batch(batch_size, func)
         y_pred = model(x)
         loss = F.smooth_l1_loss(y_pred, y)
 
@@ -91,9 +112,7 @@ class SimModel(nn.Module):
         return self.layers(x)
 
 
-def get_models() -> tuple[nn.Module, list[nn.Module], list[list[nn.Module]]]:
-    gt_model = fit_to_func(SimModel(), target_function)
-
+def get_models() -> tuple[list[nn.Module], list[list[nn.Module]]]:
     init_models = [fit_to_func(SimModel(), func) for func in initial_functions]
 
     low_dim_models = []
@@ -105,17 +124,14 @@ def get_models() -> tuple[nn.Module, list[nn.Module], list[list[nn.Module]]]:
             models.append(model)
         low_dim_models.append(models)
 
-    return gt_model, init_models, low_dim_models
+    return init_models, low_dim_models
 
 
 def save_models(
-    gt_model: nn.Module,
     init_models: list[nn.Module],
     low_dim_models: list[list[nn.Module]],
 ) -> None:
     save_dir = "simulations/dim_complexity/saved_models"
-
-    torch.save(gt_model.state_dict(), f"{save_dir}/gt.pth")
 
     for i, model in enumerate(init_models):
         torch.save(model.state_dict(), f"{save_dir}/func={i}.pth")
@@ -126,8 +142,8 @@ def save_models(
 
 
 def main():
-    gt_model, init_models, low_dim_models = get_models()
-    save_models(gt_model, init_models, low_dim_models)
+    init_models, low_dim_models = get_models()
+    save_models(init_models, low_dim_models)
 
 
 if __name__ == "__main__":

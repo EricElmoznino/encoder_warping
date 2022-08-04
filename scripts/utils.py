@@ -6,6 +6,20 @@ from omegaconf import DictConfig
 def get_datamodule(
     cfg: DictConfig, train_transform: ImageTransform, eval_transform: ImageTransform
 ) -> BaseDataModule:
+    """
+    Convenience function to grab the correct dataset based on a script's configuration.
+
+    Args:
+        cfg (DictConfig): Hydra configuration object describing desired dataset.
+        train_transform (ImageTransform): Image transform to apply to training data.
+        eval_transform (ImageTransform): Image transform to apply to evaluation data.
+
+    Raises:
+        ValueError: Unimplemented dataset specified by the configuration.
+
+    Returns:
+        BaseDataModule: A subclass of BaseDataModule that implements the correct dataset.
+    """
     if cfg.data.name == "nsd":
         datamodule = NSDDataModule(
             nsd_dir=cfg.data.nsd_dir,

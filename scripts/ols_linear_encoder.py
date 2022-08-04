@@ -20,6 +20,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     version_base=None, config_path="configurations", config_name="ols_linear_encoder"
 )
 def main(cfg: DictConfig) -> None:
+    """
+    Takes in a Hydra-specified configuration and trains a linear
+    encoding model using either OLS or Ridge regression.
+
+    Results are saved in `saved_runs/ols_linear_encoder/[run_name]`.
+    `run_name` is dynamically generated based on the configuration.
+
+    Args:
+        cfg (DictConfig): A Hydra configuration object.
+    """
     # Create save directory
     run_name = "_".join(
         [f"neural-data={cfg.data.name}_alpha={cfg.alpha}"]
@@ -53,12 +63,24 @@ def main(cfg: DictConfig) -> None:
     results = pd.DataFrame(
         {"split": ["train", "val", "test"], "r2": [train_r2, val_r2, test_r2]}
     )
+    print(results)
     results.to_csv(f"{save_dir}/results.csv", index=False)
 
 
 def ols_linear_encoder(
     x: torch.Tensor, y: torch.Tensor, alpha: float | None = None
-) -> nn.Module:
+) -> nn.Linear:
+    """
+    Fits an OLS or Ridge linear encoding model.
+
+    Args:
+        x (torch.Tensor): Regressors matrix.
+        y (torch.Tensor): Targets matrix.
+        alpha (float | None, optional): Ridge penalty. Defaults to None, in which case OLS is used.
+
+    Returns:
+        nn.Linear: A PyTorch linear model with the fitted OLS/Ridge parameters.
+    """
     if alpha is None:
         alpha = 0.0
 
@@ -78,6 +100,17 @@ def ols_linear_encoder(
 
 
 def get_data(model: nn.Module, dm: pl.LightningDataModule) -> tuple[torch.Tensor, ...]:
+    """
+    Makes a linear regression dataset based on the model's activations.
+
+    Args:
+        model (nn.Module): PyTorch model to use for obtaining activations.
+        dm (pl.LightningDataModule): PyTorch Lightning datamodule containing stimuli and targets.
+
+    Returns:
+        tuple[torch.Tensor, ...]: Regressors and targets for training/validation/test splits.
+    """
+
     def get_activations_and_labels(
         dl: torch.utils.data.DataLoader,
     ) -> tuple[torch.Tensor, torch.Tensor]:

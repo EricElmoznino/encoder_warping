@@ -15,6 +15,19 @@ from scripts.utils import get_datamodule
 
 @hydra.main(version_base=None, config_path="configurations", config_name="encoding_dim")
 def main(cfg: DictConfig) -> None:
+    """
+    Takes in a Hydra-specified configuration and trains a set
+    of encoding models through gradient descent with varying
+    sizes for the low-dimensional parameter embedding vector.
+
+    Results (TensorBoard logs, model checkpoints, and final test set performances)
+    are saved in `saved_runs/encoding_dim/[run name]`.
+    If `run_name` is not specified in the configuration, it
+    is automatically generated based on the other configuration arguments.
+
+    Args:
+        cfg (DictConfig): A Hydra configuration object.
+    """
     # Create save directory
     if cfg.run_name is None:
         cfg.run_name = "_".join(
@@ -30,16 +43,30 @@ def main(cfg: DictConfig) -> None:
     low_dims = np.unique(low_dims.astype(int))
     low_dims = np.concatenate([[0], low_dims])
 
+    # Train models for each low dimensionality value
     results = []
     for low_dim in low_dims:
         test_r2 = train(cfg, save_dir, low_dim)
         results.append({"test_r2": test_r2, "low_dim": low_dim})
 
+    # Save results
     results = pd.DataFrame(results)
+    print(results)
     results.to_csv(f"{save_dir}/results.csv", index=False)
 
 
 def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
+    """
+    Train a model with a given low-dimensional parameter embedding vector size.
+
+    Args:
+        cfg (DictConfig): A Hydra configuration object.
+        save_dir (str): Directory to save TensorBoard logs and model checkpoints.
+        low_dim (int): Size of the low-dimensional parameter embedding vector.
+
+    Returns:
+        float: Performance on the test set.
+    """
     save_dir = f"{save_dir}/low_dim={low_dim}"
 
     model, layer_groups, image_transform = get_model(

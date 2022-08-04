@@ -11,6 +11,16 @@ from datasets.utils import ImageLoaderDataPipe
 
 
 class MajajDataModule(BaseDataModule):
+    """
+    Creates a datamodule for the Majaj et al. 2015 dataset.
+
+    The Majaj et al. 2015 dataset is a collection of
+    object images and their multiunit neural recordings
+    in two rhesus macaques.
+
+    https://www.jneurosci.org/content/35/39/13402
+    """
+
     def __init__(
         self,
         data_path: str,
@@ -21,6 +31,18 @@ class MajajDataModule(BaseDataModule):
         batch_size: int = 64,
         num_workers: int = 4,
     ) -> None:
+        """
+        Initializes the Majaj data module.
+
+        Args:
+            data_path (str):  Path to a directory containing the Majaj neural data (*.nc file).
+            stimuli_dir (str): Path to a directory containing the image stimuli.
+            roi (str): Brain region of interest to use (either "IT" or "V4").
+            train_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli for training. Defaults to None, in which case basic resizing/scaling is applied.
+            eval_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli for evaluation. Defaults to None, in which case basic resizing/scaling is applied.
+            batch_size (int, optional): Batch size. Defaults to 64.
+            num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
+        """
         super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.data_path = data_path
         self.stimuli_dir = stimuli_dir
@@ -77,6 +99,19 @@ def get_majaj_dataset(
     split: Split,
     image_transform: ImageTransform | None = None,
 ) -> tuple[MapDataPipe, int]:
+    """
+    Returns a PyTorch datapipe for the Majaj dataset with its associated image stimuli.
+
+    Args:
+        data_path (str): Path to a directory containing the Majaj neural data (*.nc file).
+        stimuli_dir (str): Path to a directory containing the image stimuli.
+        roi (str): Brain region of interest to use (either "IT" or "V4").
+        split (Split): One of "train", "val", or "test".
+        image_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli. Defaults to None, in which case basic resizing/scaling is applied.
+
+    Returns:
+        tuple[MapDataPipe, int]: A tuple of (1) a PyTorch datapipe that returns pairs of the image stimuli as tensors and their corresponding neural responses and (2) the number of recording probes.
+    """
     if image_transform is None:
         image_transform = transforms.Compose(
             [
@@ -98,7 +133,19 @@ def get_majaj_dataset(
 
 
 class MajajDataPipe(MapDataPipe):
+    """
+    A PyTorch datapipe for the Majaj dataset.
+    """
+
     def __init__(self, data_path: str, roi: str, split: Split):
+        """
+        Initializes the datapipe.
+
+        Args:
+            data_path (str): Path to a directory containing the Majaj neural data (*.nc file).
+            roi (str): Brain region of interest to use (either "IT" or "V4").
+            split (Split): One of "train", "val", or "test".
+        """
         super().__init__()
 
         self.data_path = data_path
@@ -130,11 +177,26 @@ class MajajDataPipe(MapDataPipe):
     def __len__(self) -> int:
         return len(self.neurons)
 
-    def __getitem__(self, index) -> torch.Tensor:
+    def __getitem__(self, index: int) -> torch.Tensor:
+        """
+        Gets the neural response for the given index.
+
+        Args:
+            index (int): Index of a stimulus presentation.
+
+        Returns:
+            torch.Tensor: Vector of neural responses.
+        """
         neurons = self.neurons.isel(image_id=index)
         neurons = torch.from_numpy(neurons.values)
         return neurons
 
     @property
     def image_names(self):
+        """
+        List of image file names (same index order as neural recordings).
+
+        Returns:
+            list[str]: List of image file names.
+        """
         return self.neurons.image_name.values.tolist()

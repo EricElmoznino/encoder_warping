@@ -11,6 +11,15 @@ from datasets.utils import ImageLoaderDataPipe
 
 
 class NSDDataModule(BaseDataModule):
+    """
+    Creates a datamodule for the NSD dataset.
+
+    The Natural Scenes Dataset (NSD) is a collection of
+    natural scene images and their fMRI responses.
+
+    https://www.nature.com/articles/s41593-021-00962-x
+    """
+
     def __init__(
         self,
         nsd_dir: str,
@@ -20,6 +29,17 @@ class NSDDataModule(BaseDataModule):
         batch_size: int = 64,
         num_workers: int = 4,
     ) -> None:
+        """
+        Initializes the NSD data module.
+
+        Args:
+            nsd_dir (str): Path to a directory containing the NSD voxel data (must contain a voxels.nc and metadata.csv file).
+            stimuli_dir (str): Path to a directory containing the image stimuli.
+            train_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli for training. Defaults to None, in which case basic resizing/scaling is applied.
+            eval_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli for evaluation. Defaults to None, in which case basic resizing/scaling is applied.
+            batch_size (int, optional): Batch size. Defaults to 64.
+            num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
+        """
         super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.nsd_dir = nsd_dir
         self.stimuli_dir = stimuli_dir
@@ -71,6 +91,18 @@ def get_nsd_dataset(
     split: Split,
     image_transform: ImageTransform | None = None,
 ) -> tuple[MapDataPipe, int]:
+    """
+    Returns a PyTorch datapipe for the NSD dataset with its associated image stimuli.
+
+    Args:
+        nsd_dir (str): Path to a directory containing the NSD voxel data (must contain a voxels.nc and metadata.csv file).
+        stimuli_dir (str): Path to a directory containing the image stimuli.
+        split (Split): One of "train", "val", or "test".
+        image_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli. Defaults to None, in which case basic resizing/scaling is applied.
+
+    Returns:
+        tuple[MapDataPipe, int]: A tuple of (1) a PyTorch datapipe that returns pairs of the image stimuli as tensors and their corresponding fMRI voxel responses and (2) the number of voxels.
+    """
     if image_transform is None:
         image_transform = transforms.Compose(
             [
@@ -92,7 +124,18 @@ def get_nsd_dataset(
 
 
 class NSDDataPipe(MapDataPipe):
+    """
+    A PyTorch datapipe for the NSD dataset.
+    """
+
     def __init__(self, data_dir: str, split: Split):
+        """
+        Initializes the datapipe.
+
+        Args:
+            data_dir (str): Path to a directory containing the NSD data (must contain a voxels.nc and metadata.csv file).
+            split (Split): One of "train", "val", or "test".
+        """
         super().__init__()
 
         self.data_dir = data_dir
@@ -133,11 +176,26 @@ class NSDDataPipe(MapDataPipe):
     def __len__(self) -> int:
         return len(self.voxels)
 
-    def __getitem__(self, index) -> torch.Tensor:
+    def __getitem__(self, index: int) -> torch.Tensor:
+        """
+        Gets the voxel response for the given index.
+
+        Args:
+            index (int): Index of a stimulus presentation.
+
+        Returns:
+            torch.Tensor: Vector of voxel responses.
+        """
         voxels = self.voxels.isel(stimulus_id=index)
         voxels = torch.from_numpy(voxels.values)
         return voxels
 
     @property
-    def image_names(self):
+    def image_names(self) -> list[str]:
+        """
+        List of image file names (same index order as voxels).
+
+        Returns:
+            list[str]: List of image file names.
+        """
         return self.voxels.image_name.values.tolist()
