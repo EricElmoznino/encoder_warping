@@ -83,8 +83,8 @@ def logistic_regression(x: torch.Tensor, y: torch.LongTensor) -> nn.Linear:
     w, b = reg.coef_, reg.intercept_
     w, b = torch.from_numpy(w).to(x.device), torch.from_numpy(b).to(y.device)
 
-    classifier = nn.Linear(w.shape[0], w.shape[1])
-    classifier.weight = nn.Parameter(w.T)
+    classifier = nn.Linear(w.shape[1], w.shape[0])
+    classifier.weight = nn.Parameter(w)
     classifier.bias = nn.Parameter(b)
 
     return classifier
