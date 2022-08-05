@@ -81,7 +81,10 @@ def logistic_regression(x: torch.Tensor, y: torch.LongTensor) -> nn.Linear:
     reg = LogisticRegression()
     reg.fit(x.cpu().numpy(), y.cpu().numpy())
     w, b = reg.coef_, reg.intercept_
-    w, b = torch.from_numpy(w).to(x.device), torch.from_numpy(b).to(y.device)
+    w, b = (
+        torch.from_numpy(w).float().to(x.device),
+        torch.from_numpy(b).float().to(y.device),
+    )
 
     classifier = nn.Linear(w.shape[1], w.shape[0])
     classifier.weight = nn.Parameter(w)
