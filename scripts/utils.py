@@ -44,7 +44,7 @@ def get_datamodule(
             batch_size=cfg.train.batch_size,
             num_workers=cfg.train.num_workers,
         )
-    elif cfg.data.name == "imagenet21k-small":
+    elif cfg.data.name.startswith("imagenet21k"):
         datamodule = ImageFolderDataModule(
             data_dir=cfg.data.data_dir,
             limit_classes=cfg.data.limit_classes,
