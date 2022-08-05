@@ -172,7 +172,7 @@ class ImageFolderDataPipe(MapDataPipe):
         classes = os.listdir(self.data_dir)
         if self.limit_classes is not None:
             rand = random.Random(self.random_seed)
-            random.shuffle(classes)
+            rand.shuffle(classes)
             classes = classes[: self.limit_classes]
 
         image_names = []
@@ -184,7 +184,7 @@ class ImageFolderDataPipe(MapDataPipe):
 
             if self.limit_samples is not None:
                 rand = random.Random(self.random_seed)
-                random.shuffle(class_samples)
+                rand.shuffle(class_samples)
                 class_samples = class_samples[: self.limit_samples]
 
             if split == "train":
