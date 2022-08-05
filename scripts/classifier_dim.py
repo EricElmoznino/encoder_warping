@@ -13,7 +13,9 @@ from tasks import ClassifierLinearTask, ClassifierWarpingTask
 from scripts.utils import get_datamodule
 
 
-@hydra.main(version_base=None, config_path="configurations", config_name="classifier_dim")
+@hydra.main(
+    version_base=None, config_path="configurations", config_name="classifier_dim"
+)
 def main(cfg: DictConfig) -> None:
     """
     Takes in a Hydra-specified configuration and trains a set
@@ -31,8 +33,7 @@ def main(cfg: DictConfig) -> None:
     # Create save directory
     if cfg.run_name is None:
         cfg.run_name = "_".join(
-            [f"class-data={cfg.data.name}"]
-            + [f"{k}={v}" for k, v in cfg.model.items()]
+            [f"class-data={cfg.data.name}"] + [f"{k}={v}" for k, v in cfg.model.items()]
         )
     save_dir = f"saved_runs/classifier_dim/{cfg.run_name}"
     shutil.rmtree(save_dir, ignore_errors=True)
@@ -91,7 +92,7 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
             low_dim=low_dim,
             layer_groups=layer_groups,
             representation_size=model.representation_size,
-            n_class=datamodule.n_outputs,
+            n_classes=datamodule.n_outputs,
             lr=cfg.train.lr,
             weight_decay=cfg.train.weight_decay,
         )
