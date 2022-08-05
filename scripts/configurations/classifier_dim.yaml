@@ -1,0 +1,11 @@
+defaults:
+  - train: defaults
+  - model: m0
+  - data: imagenet21k-small
+  - _self_
+
+dims:
+  n_samples: 10
+  max: 10000
+
+run_name:

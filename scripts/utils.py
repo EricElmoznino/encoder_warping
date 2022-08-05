@@ -1,4 +1,9 @@
-from datasets import BaseDataModule, NSDDataModule, MajajDataModule
+from datasets import (
+    BaseDataModule,
+    NSDDataModule,
+    MajajDataModule,
+    ImageFolderDataModule,
+)
 from models import ImageTransform
 from omegaconf import DictConfig
 
@@ -34,6 +39,16 @@ def get_datamodule(
             data_path=cfg.data.data_path,
             stimuli_dir=cfg.data.stimuli_dir,
             roi=cfg.data.roi,
+            train_transform=train_transform,
+            eval_transform=eval_transform,
+            batch_size=cfg.train.batch_size,
+            num_workers=cfg.train.num_workers,
+        )
+    elif cfg.data.name == "imagenet21k-small":
+        datamodule = ImageFolderDataModule(
+            data_dir=cfg.data.data_dir,
+            limit_classes=cfg.data.limit_classes,
+            limit_samples=cfg.data.limit_samples,
             train_transform=train_transform,
             eval_transform=eval_transform,
             batch_size=cfg.train.batch_size,

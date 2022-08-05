@@ -1,0 +1,4 @@
+name: imagenet21k-small
+data_dir: /data/shared/datasets/imagenet21k_sorscher2021_downsampled/
+limit_classes: 50
+limit_samples: 100
