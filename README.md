@@ -22,6 +22,7 @@ Code for a project investigating the use of neural encoding models who's represe
     - [Preliminary results training one model at different $d$](#preliminary-results-training-one-model-at-different-d)
 - [Future ideas](#future-ideas)
     - [Skip the linear encoding layer](#skip-the-linear-encoding-layer)
+    - [Fit the linear layer first, then consider it as part of the model](#fit-the-linear-layer-first-then-consider-it-as-part-of-the-model)
 
 # Project overview
 
@@ -127,3 +128,9 @@ Nevertheless, if we want to see something like "how many parameters must change 
 Gradient descent methods would still be necessary because there's no other good way to optimize the DNN (i.e. we can't write a closed form solution for the optimal low-dimensional parameters). In addition, if the stimulus set is sufficiently large such that we can't pass it as an entire batch to the model and obtain gradients, we'll need an batched form of this RSA objective (although this might be as simple as just doing RSA on the current batch).
 
 Note that this batched RSA-like objective is similar to some loss functions used in contrastive learning, since it considers the distance between all pairs of samples in the batch, so it's probably a theoretically-sound thing to do.
+
+### Fit the linear layer first, then consider it as part of the model
+
+To eliminate the same concern as above, Raj came up with an alternative idea. First, we can just fine-tune the final linear layer using SGD, or even OLS/Ridge/PLS (since we won't have to backpropagate through the rest of the model). Afterwards, we can consider the initial model + the linear layer as "the model", and fine-tune all of its parameters through the low-dimensional embedding. The linear layer's parameters would be included in the $D$-dimensional parameter space that the $P$ matrix projects to.
+
+One of the advantages of this is that it would allow us to fit these linear projections on top of a concatenated vector of model layers. This is something that would not be easy to do with the RSA approach above, because that approach requires us to manually specify a layer-ROI correspondence ourselves.
