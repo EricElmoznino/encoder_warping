@@ -7,6 +7,7 @@ from .base import BaseModelLayer
 
 def get_resnet18_torchvision(
     layer: str,
+    pretrained: bool, 
 ) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
     """
     Get the specified layer from a ResNet18 model trained on ImageNet classification.
@@ -20,8 +21,10 @@ def get_resnet18_torchvision(
         to be applied to the input images.
     """
     assert layer in ResNet18Layer.permissible_layers
-    weights = ResNet18_Weights.IMAGENET1K_V1
+    if pretrained:
+        weights = ResNet18_Weights.IMAGENET1K_V1
 
+    # not initialised then untrained, can be decided by a paramter
     model = ResNet18Layer(layer, weights)
 
     # Only need layers with parameters in these groups

@@ -1,0 +1,4 @@
+arch: resnet18
+dataset: 
+task: object-classification
+layer: avgpool
