@@ -1,3 +1,3 @@
 name: nsd
-nsd_dir: /home/swadhwa5/datasets/nsd_one_subj
-stimuli_dir: /data/shared/brainio/bonner-brainio/allen2021.natural-scenes
+nsd_dir: /data/mbonner5/shared/eric-datasets/nsd_one_subj
+stimuli_dir: /data/mbonner5/shared/brainio/bonner-brainio/allen2021.natural-scenes
