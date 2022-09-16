@@ -31,7 +31,8 @@ def get_resnet18_torchvision(
     layer_groups = [["conv1", "bn1"], "layer1", "layer2", "layer3", "layer4"]
     layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
 
-    image_transform = weights.transforms()
+    if pretrained:
+        image_transform = weights.transforms()
 
     return model, layer_groups, image_transform
 
