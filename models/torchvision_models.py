@@ -7,6 +7,7 @@ from .base import BaseModelLayer
 
 def get_resnet18_torchvision(
     layer: str,
+    pretrained: bool, 
 ) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
     """
     Get the specified layer from a ResNet18 model trained on ImageNet classification.
@@ -20,7 +21,9 @@ def get_resnet18_torchvision(
         to be applied to the input images.
     """
     assert layer in ResNet18Layer.permissible_layers
-    weights = ResNet18_Weights.IMAGENET1K_V1
+    
+    if pretrained:
+        weights = ResNet18_Weights.IMAGENET1K_V1
 
     model = ResNet18Layer(layer, weights)
 
@@ -28,7 +31,8 @@ def get_resnet18_torchvision(
     layer_groups = [["conv1", "bn1"], "layer1", "layer2", "layer3", "layer4"]
     layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
 
-    image_transform = weights.transforms()
+    if pretrained:
+        image_transform = weights.transforms()
 
     return model, layer_groups, image_transform
 
