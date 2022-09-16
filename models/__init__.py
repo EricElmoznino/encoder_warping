@@ -24,8 +24,6 @@ def get_model(
         to be applied to the input images.
     """
     if arch == "resnet18" and dataset == "imagenet" and task == "object-classification":
-        return get_resnet18_torchvision(layer, True)
-    if arch == "resnet18" and dataset == None and task == "object-classification":
-        return get_resnet18_torchvision(layer, False)
+        return get_resnet18_torchvision(layer)
     else:
         raise ValueError(f"Unknown model: arch={arch}, dataset={dataset}, task={task}")
