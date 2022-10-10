@@ -1,7 +1,7 @@
 defaults:
   - train: defaults
   - model: m0
-  - data: nsd
+  - data: majaj
   - _self_
 
 dims:

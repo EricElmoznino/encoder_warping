@@ -5,8 +5,8 @@ def main():
     # layer 3
     # Read data
     plt.clf()
-    df3 = pd.read_csv ('/home/swadhwa5/projects/encoder_warping/saved_runs/encoding_dim/neural-data=nsd_arch=resnet18_dataset=imagenet_task=object-classification_layer=layer4/results.csv')
-    df4 = pd.read_csv ('/home/swadhwa5/projects/encoder_warping/saved_runs/encoding_dim/neural-data=nsd_arch=resnet18_dataset=None_task=object-classification_layer=layer4/results.csv')
+    df3 = pd.read_csv ('/home/swadhwa5/projects/encoder_warping/saved_runs/encoding_dim/neural-data=majaj_arch=resnet18_dataset=imagenet_task=object-classification_layer=layer1/results.csv')
+    df4 = pd.read_csv ('/home/swadhwa5/projects/encoder_warping/saved_runs/encoding_dim/neural-data=majaj_arch=resnet18_dataset=None_task=object-classification_layer=layer1/results.csv')
     # gca stands for 'get current axis'
     ax = plt.gca()
 
@@ -15,7 +15,7 @@ def main():
     plt.xlabel('Number of dimensions')
     plt.ylabel('R^2')
     plt.title('Resnet18 layer3')
-    plt.savefig('/home/swadhwa5/projects/encoder_warping/simulations/dim_complexity/saved_figures/dim_R2_plot_layer4.png')
+    plt.savefig('/home/swadhwa5/projects/encoder_warping/simulations/dim_complexity/saved_figures/majaj/dim_R2_plot_layer1.png')
 
 
 if __name__ == "__main__":
