@@ -4,4 +4,6 @@ defaults:
   - data: nsd
   - _self_
 
+layerwise: layerwise
+
 alpha:

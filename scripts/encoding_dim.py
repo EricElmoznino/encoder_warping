@@ -12,7 +12,6 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from tasks import EncoderLinearTask, EncoderWarpingTask
 from scripts.utils import get_datamodule
 
-
 @hydra.main(version_base=None, config_path="configurations", config_name="encoding_dim")
 def main(cfg: DictConfig) -> None:
     """
@@ -29,6 +28,7 @@ def main(cfg: DictConfig) -> None:
         cfg (DictConfig): A Hydra configuration object.
     """
     # Create save directory
+    torch.cuda.empty_cache()
     if cfg.run_name is None:
         cfg.run_name = "_".join(
             [f"neural-data={cfg.data.name}"]
@@ -43,11 +43,19 @@ def main(cfg: DictConfig) -> None:
     low_dims = np.unique(low_dims.astype(int))
     low_dims = np.concatenate([[0], low_dims])
 
+    layerwise = False
+    if cfg.layerwise == "layerwise":
+        layerwise = True
+
     # Train models for each low dimensionality value
     results = []
     for low_dim in low_dims:
-        test_r2 = train(cfg, save_dir, low_dim)
-        results.append({"test_r2": test_r2, "low_dim": low_dim})
+        if cfg.model.arch == "engineered_model":
+            test_r = train(cfg, save_dir, low_dim, layerwise)
+            results.append({"test_r": test_r, "low_dim": low_dim})
+        else:
+            test_r2 = train(cfg, save_dir, low_dim, layerwise)
+            results.append({"test_r2": test_r2, "low_dim": low_dim})
 
     # Save results
     results = pd.DataFrame(results)
@@ -55,7 +63,7 @@ def main(cfg: DictConfig) -> None:
     results.to_csv(f"{save_dir}/results.csv", index=False)
 
 
-def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
+def train(cfg: DictConfig, save_dir: str, low_dim: int, layerwise: bool) -> float:
     """
     Train a model with a given low-dimensional parameter embedding vector size.
 
@@ -70,7 +78,7 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
     save_dir = f"{save_dir}/low_dim={low_dim}"
 
     model, layer_groups, image_transform = get_model(
-        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer
+        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer, layerwise
     )
     datamodule = get_datamodule(
         cfg, image_transform, image_transform
@@ -109,14 +117,18 @@ def train(cfg: DictConfig, save_dir: str, low_dim: int) -> float:
 
     # Train and evaluate
     trainer.fit(task, datamodule=datamodule)
-    test_r2 = trainer.test(datamodule=datamodule, ckpt_path="best")[0]["test_r2"]
+    if cfg.model.arch == "engineered_model":
+        print("hi I found the engineered model so I'm returning pearson_r")
+        test_metric = trainer.test(datamodule=datamodule, ckpt_path="best")[0]["test_r"]
+    else:
+        test_metric = trainer.test(datamodule=datamodule, ckpt_path="best")[0]["test_r2"]
 
     # Clear the model checkpoints to save disk space
     shutil.rmtree(
         f"{save_dir}/lightning_logs/version_0/version0/checkpoints", ignore_errors=True
     )
 
-    return test_r2
+    return test_metric
 
 
 if __name__ == "__main__":

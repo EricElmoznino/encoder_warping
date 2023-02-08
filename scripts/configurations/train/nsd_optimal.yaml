@@ -1,5 +1,5 @@
 lr: 1e-4
 weight_decay: 0.0
-batch_size: 64
-num_workers: 8
+batch_size: 1 # was 64
+num_workers: 0 # was 8
 max_epochs: 100

@@ -18,6 +18,7 @@ class ImageFolderDataModule(BaseDataModule):
     def __init__(
         self,
         data_dir: str,
+        model: str, 
         limit_classes: int | None = None,
         limit_samples: int | None = None,
         train_transform: ImageTransform | None = None,
@@ -38,7 +39,9 @@ class ImageFolderDataModule(BaseDataModule):
             random_seed (int): Random seed for consistency in sampled classes/samples across calls. Defaults to 0.
             batch_size (int, optional): Batch size. Defaults to 64.
             num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
+            model(str): name of model being used
         """
+        print("Hi this also needs to be changed")
         super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.data_dir = data_dir
         self.limit_classes = limit_classes
@@ -46,11 +49,13 @@ class ImageFolderDataModule(BaseDataModule):
         self.train_transform = train_transform
         self.eval_transform = eval_transform
         self.random_seed = random_seed
+        self.model = model
 
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
             self._train_dataset, _ = get_image_folder_dataset(
                 self.data_dir,
+                self.model, 
                 split="train",
                 limit_classes=self.limit_classes,
                 limit_samples=self.limit_samples,
@@ -59,6 +64,7 @@ class ImageFolderDataModule(BaseDataModule):
             )
             self._val_dataset, self._n_outputs = get_image_folder_dataset(
                 self.data_dir,
+                self.model, 
                 split="val",
                 limit_classes=self.limit_classes,
                 limit_samples=self.limit_samples,
@@ -68,6 +74,7 @@ class ImageFolderDataModule(BaseDataModule):
         if stage in (None, "test"):
             self._test_dataset, self._n_outputs = get_image_folder_dataset(
                 self.data_dir,
+                self.model, 
                 split="test",
                 limit_classes=self.limit_classes,
                 limit_samples=self.limit_samples,
@@ -94,6 +101,7 @@ class ImageFolderDataModule(BaseDataModule):
 
 def get_image_folder_dataset(
     data_dir: str,
+    model: str, 
     split: Split,
     limit_classes: int | None = None,
     limit_samples: int | None = None,
@@ -116,13 +124,24 @@ def get_image_folder_dataset(
         tuple[MapDataPipe, int]: A tuple of (1) a PyTorch datapipe that returns pairs of the image stimuli as tensors and their corresponding class labels and (2) the number of classes.
     """
     if image_transform is None:
-        image_transform = transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-            ]
-        )
+        if model == "engineered_model":
+            size = 96
+            image_transform = transforms.Compose(
+                [
+                    transforms.Resize((size,size)),
+                    transforms.Grayscale(),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=0.5, std=0.5)
+                    ]
+            )
+        else:
+            image_transform = transforms.Compose(
+                [
+                    transforms.Resize((224, 224)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ]
+            )
 
     image_folder_datapipe = ImageFolderDataPipe(
         data_dir, split, limit_classes, limit_samples, random_seed

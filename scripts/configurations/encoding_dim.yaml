@@ -1,8 +1,10 @@
 defaults:
-  - train: defaults
+  - train: nsd_optimal # was defaults
   - model: m0
-  - data: majaj
+  - data: nsd
   - _self_
+
+layerwise: layerwise
 
 dims:
   n_samples: 10

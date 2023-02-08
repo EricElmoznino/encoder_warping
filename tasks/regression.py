@@ -6,6 +6,7 @@ from low_dim import FastfoodWrapper
 from torch import nn, optim
 from torch.nn import functional as F
 from torchmetrics import R2Score
+from torchmetrics import PearsonCorrCoef
 from models import LayerGroups
 
 Phase = Literal["train", "val", "test"]
@@ -41,11 +42,18 @@ class EncoderLinearTask(pl.LightningModule):
         )
 
         self.model = model.eval()
+        print("hi")
+        print(representation_size)
+        print(output_size)
         self.output_head = nn.Linear(representation_size, output_size)
 
         self.r2_train = R2Score(num_outputs=output_size)
         self.r2_val = R2Score(num_outputs=output_size)
         self.r2_test = R2Score(num_outputs=output_size)
+
+        self.r_train = PearsonCorrCoef(num_outputs=output_size)
+        self.r_val = PearsonCorrCoef(num_outputs=output_size)
+        self.r_test = PearsonCorrCoef(num_outputs=output_size)
 
     def forward(self, x: Any) -> torch.Tensor:
         """
@@ -106,8 +114,9 @@ class EncoderLinearTask(pl.LightningModule):
             y_true (torch.Tensor): True neural responses.
             phase (Phase): One of "train", "val", or "test".
         """
-        r2 = self.metrics_for_phase(phase)
+        (r2, r) = self.metrics_for_phase(phase)
         r2.update(y_pred, y_true)
+        r.update(y_pred, y_true)
 
     def log_metrics(self, phase: Phase):
         """
@@ -117,11 +126,14 @@ class EncoderLinearTask(pl.LightningModule):
         Args:
             phase (Phase): One of "train", "val", or "test".
         """
-        r2 = self.metrics_for_phase(phase)
+        (r2, r) = self.metrics_for_phase(phase)
         self.log(f"{phase}_r2", r2.compute(), prog_bar=True)
         r2.reset()
 
-    def metrics_for_phase(self, phase: Phase) -> R2Score:
+        self.log(f"{phase}_r", r.compute().mean(), prog_bar=True)
+        r.reset()
+
+    def metrics_for_phase(self, phase: Phase) -> (R2Score, PearsonCorrCoef):
         """
         Convenience function to get the R2Score object
         based on the current phase of training.
@@ -133,11 +145,11 @@ class EncoderLinearTask(pl.LightningModule):
             R2Score: R2Score object for the current phase of training.
         """
         if phase == "train":
-            return self.r2_train
+            return (self.r2_train, self.r_train)
         elif phase == "val":
-            return self.r2_val
+            return (self.r2_val, self.r_val)
         else:
-            return self.r2_test
+            return (self.r2_test, self.r_test)
 
     def configure_optimizers(self):
         return optim.Adam(

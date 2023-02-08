@@ -7,7 +7,7 @@ from PIL import Image
 from torch.utils.data import DataLoader
 from torchdata.datapipes.map import MapDataPipe
 
-Split = Literal["train", "val", "test"]
+Split = Literal["train", "val", "test", "all"]
 Stage = Literal["fit", "test"] | None
 ImageTransform = Callable[[Image.Image], torch.Tensor]
 
@@ -29,6 +29,7 @@ class BaseDataModule(pl.LightningDataModule, ABC):
             batch_size (int, optional): Batch size. Defaults to 64.
             num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
         """
+        print("hi the batch size is this: ", batch_size)
         super().__init__()
         self.save_hyperparameters("batch_size")
         self.num_workers = num_workers

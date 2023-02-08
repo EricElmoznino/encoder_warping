@@ -33,6 +33,7 @@ def get_datamodule(
             eval_transform=eval_transform,
             batch_size=cfg.train.batch_size,
             num_workers=cfg.train.num_workers,
+            model = cfg.model.arch
         )
     elif cfg.data.name == "majaj":
         datamodule = MajajDataModule(
@@ -43,6 +44,7 @@ def get_datamodule(
             eval_transform=eval_transform,
             batch_size=cfg.train.batch_size,
             num_workers=cfg.train.num_workers,
+            model = cfg.model.arch
         )
     elif cfg.data.name.startswith("imagenet21k"):
         datamodule = ImageFolderDataModule(
@@ -53,6 +55,7 @@ def get_datamodule(
             eval_transform=eval_transform,
             batch_size=cfg.train.batch_size,
             num_workers=cfg.train.num_workers,
+            model = cfg.model.arch
         )
     else:
         raise ValueError(f"Unsupported dataset: {cfg.data.name}")

@@ -1,10 +1,10 @@
-from .torchvision_models import get_resnet18_torchvision
+from .torchvision_models import get_resnet18_torchvision, get_engineered_model
 from .base import BaseModelLayer
 from .typing import LayerGroups, ImageTransform
 
 
 def get_model(
-    arch: str, dataset: str, task: str, layer: str
+    arch: str, dataset: str, task: str, layer: str, layerwise: bool
 ) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
     """
     Convenience function to grab the correct model from a configuration.
@@ -24,8 +24,10 @@ def get_model(
         to be applied to the input images.
     """
     if arch == "resnet18" and dataset == "imagenet" and task == "object-classification":
-        return get_resnet18_torchvision(layer, True)
+        return get_resnet18_torchvision(layer, True, layerwise)
     if arch == "resnet18" and dataset == None and task == "object-classification":
-        return get_resnet18_torchvision(layer, False)
+        return get_resnet18_torchvision(layer, False, layerwise)
+    if arch == "engineered_model" and dataset == None and task == "object-classification":
+        return get_engineered_model(layer, False, layerwise)
     else:
         raise ValueError(f"Unknown model: arch={arch}, dataset={dataset}, task={task}")

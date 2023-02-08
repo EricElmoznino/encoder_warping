@@ -1,0 +1,4 @@
+arch: engineered_model
+dataset: 
+task: object-classification
+layer: last

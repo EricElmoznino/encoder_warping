@@ -26,6 +26,7 @@ class MajajDataModule(BaseDataModule):
         data_path: str,
         stimuli_dir: str,
         roi: str,
+        model: str, 
         train_transform: ImageTransform | None = None,
         eval_transform: ImageTransform | None = None,
         batch_size: int = 64,
@@ -42,6 +43,7 @@ class MajajDataModule(BaseDataModule):
             eval_transform (ImageTransform | None, optional): Image preprocessing to apply when loading the stimuli for evaluation. Defaults to None, in which case basic resizing/scaling is applied.
             batch_size (int, optional): Batch size. Defaults to 64.
             num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
+            model(str): name of model being used
         """
         super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.data_path = data_path
@@ -49,6 +51,7 @@ class MajajDataModule(BaseDataModule):
         self.roi = roi
         self.train_transform = train_transform
         self.eval_transform = eval_transform
+        self.model = model
 
     def setup(self, stage: Stage) -> None:
         if stage in (None, "fit"):
@@ -56,6 +59,7 @@ class MajajDataModule(BaseDataModule):
                 self.data_path,
                 self.stimuli_dir,
                 self.roi,
+                self.model, 
                 split="train",
                 image_transform=self.train_transform,
             )
@@ -63,6 +67,7 @@ class MajajDataModule(BaseDataModule):
                 self.data_path,
                 self.stimuli_dir,
                 self.roi,
+                self.model, 
                 split="val",
                 image_transform=self.eval_transform,
             )
@@ -71,6 +76,7 @@ class MajajDataModule(BaseDataModule):
                 self.data_path,
                 self.stimuli_dir,
                 self.roi,
+                self.model, 
                 split="test",
                 image_transform=self.eval_transform,
             )
@@ -96,6 +102,7 @@ def get_majaj_dataset(
     data_path: str,
     stimuli_dir: str,
     roi: str,
+    model: str, 
     split: Split,
     image_transform: ImageTransform | None = None,
 ) -> tuple[MapDataPipe, int]:
@@ -112,14 +119,26 @@ def get_majaj_dataset(
     Returns:
         tuple[MapDataPipe, int]: A tuple of (1) a PyTorch datapipe that returns pairs of the image stimuli as tensors and their corresponding neural responses and (2) the number of recording probes.
     """
+    
     if image_transform is None:
-        image_transform = transforms.Compose(
-            [
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-            ]
-        )
+        if model == "engineered_model":
+            size = 96
+            image_transform = transforms.Compose(
+                [
+                    transforms.Resize((size,size)),
+                    transforms.Grayscale(),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=0.5, std=0.5)
+                    ]
+            )
+        else:
+            image_transform = transforms.Compose(
+                [
+                    transforms.Resize((224, 224)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ]
+            )
 
     majaj_datapipe = MajajDataPipe(data_path, roi, split)
     image_datapipe = ImageLoaderDataPipe(stimuli_dir, majaj_datapipe.image_names)

@@ -39,9 +39,13 @@ def main(cfg: DictConfig) -> None:
     shutil.rmtree(save_dir, ignore_errors=True)
     os.makedirs(save_dir)
 
+    layerwise = False
+    if cfg.layerwise == "layerwise":
+        layerwise = True
+
     # Get model and datasets
     model, _, image_transform = get_model(
-        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer
+        cfg.model.arch, cfg.model.dataset, cfg.model.task, cfg.model.layer, layerwise
     )
     model = model.to(device)
     datamodule = get_datamodule(cfg, image_transform, image_transform)
