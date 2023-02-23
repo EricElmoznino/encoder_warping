@@ -1,4 +1,4 @@
 arch: resnet18
 dataset: imagenet
 task: object-classification
-layer: layer4
+layer: avgpool

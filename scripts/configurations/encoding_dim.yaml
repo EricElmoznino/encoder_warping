@@ -1,5 +1,5 @@
 defaults:
-  - train: nsd_optimal # was defaults
+  - train: defaults
   - model: m0
   - data: nsd
   - _self_
