@@ -20,6 +20,5 @@ def main():
     plt.title('Resnet18 avgpool Nsd')
     plt.savefig('/home/swadhwa5/projects/encoder_warping/simulations/dim_complexity/saved_figures/nsd/dim_R2_plot_avgpool.png')
 
-
 if __name__ == "__main__":
     main()
