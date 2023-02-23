@@ -42,9 +42,6 @@ class EncoderLinearTask(pl.LightningModule):
         )
 
         self.model = model.eval()
-        print("hi")
-        print(representation_size)
-        print(output_size)
         self.output_head = nn.Linear(representation_size, output_size)
 
         self.r2_train = R2Score(num_outputs=output_size)

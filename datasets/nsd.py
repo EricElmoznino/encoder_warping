@@ -42,7 +42,6 @@ class NSDDataModule(BaseDataModule):
             num_workers (int, optional): Number of parallel processes loading data. Defaults to 4.
             model(str): name of model being used
         """
-        print("Hi I'm using the nsd dataset so my batch size is 32 and num_workers is 0")
         super().__init__(batch_size=batch_size, num_workers=num_workers)
         self.nsd_dir = nsd_dir
         self.stimuli_dir = stimuli_dir
@@ -126,7 +125,6 @@ def get_nsd_dataset(
 
         else:
             print("I did not find the engineered model!")
-            print("hi")
             image_transform = transforms.Compose(
                 [
                     transforms.Resize((224, 224)),

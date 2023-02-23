@@ -13,9 +13,12 @@ CATALOG = Catalog(
 
 from bonner.datasets.allen2021_natural_scenes import open_subject_assembly
 
+engineered_model = False
+
 if engineered_model:
     selectors = ({"source": "prf-visualrois"},)
 else:
+    print("using nsd general")
     selectors = ({"source": "nsdgeneral", "label": "nsdgeneral"},)
 
 filepath = CATALOG.load_data_assembly(identifier="allen2021.natural_scenes.1pt8mm.fithrf_GLMdenoise_RR", check_integrity=False)

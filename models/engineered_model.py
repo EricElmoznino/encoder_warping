@@ -10,7 +10,8 @@ class InteractionsModel(nn.Module):
                 c1: nn.Module,
                 c2: nn.Module,
                 c2_batch: int,
-                last : nn.Module
+                last : nn.Module,
+                representation_size : int
                 ):
         
         super(InteractionsModel, self).__init__()
@@ -21,7 +22,7 @@ class InteractionsModel(nn.Module):
         self.c2 = c2
         self.c2_batch = c2_batch
         self.last = last
-        self.representation_size = 400000 #40 for ols
+        self.representation_size = representation_size
         # print("representation size", self.representation_size)
         
         

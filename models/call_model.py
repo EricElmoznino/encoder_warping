@@ -15,7 +15,7 @@ class EngineeredModel:
         self.filters_1 = self.curv_params['n_ories']*self.curv_params['n_curves']*len(self.curv_params['gau_sizes']*len(self.curv_params['spatial_fre']))
         self.filters_2 = filters_2
         self.reps = reps
-        
+        self.representation_size = filters_2 * 4
     
     
     
@@ -26,7 +26,7 @@ class EngineeredModel:
         c2 = StandardConvolution(out_channels=self.filters_2,filter_size=9,filter_type='Random',pooling=('max',8))
         last = Output()
 
-        return InteractionsModel(c1,c2,self.reps,last)  
+        return InteractionsModel(c1,c2,self.reps,last, self.representation_size)  
     
     
     #

@@ -20,7 +20,7 @@ def get_engineered_model(
         layer groups for non-uniform scaling in the Fastfood transform, and image transform
         to be applied to the input images.
     """
-    num_filters = 100000
+    num_filters = 10000
     model = EngineeredModel(filters_2=num_filters).Build()
 
     layer_groups = ["c1", "c2", "last"]
@@ -119,7 +119,6 @@ class ResNet18Layer(BaseModelLayer):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        print("ho")
         if self.layer == "maxpool":
             return x
         x = self.layer1(x)
@@ -152,7 +151,7 @@ class ResNet18Layer_layerwise(BaseModelLayer):
 
     layer_sizes = {
         "maxpool": 200704,
-        "layer1": 200704, #64
+        "layer1": 64, #200704
         "layer2": 100352, #128
         "layer3": 50176, #256
         "layer4": 25088, #512
