@@ -141,7 +141,7 @@ class NSDDataPipe(MapDataPipe):
         self.data_dir = data_dir
         self.split = split
 
-        voxels = xr.load_dataarray(os.path.join(data_dir, "voxels.nc"))
+        voxels = xr.load_dataarray(os.path.join(data_dir, "new_data.nc"))
         voxels = voxels.set_index(presentation="stimulus_id")
         voxels = voxels.rename(presentation="stimulus_id")
         voxels = voxels.drop(

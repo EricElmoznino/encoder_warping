@@ -26,7 +26,7 @@ def get_resnet18_torchvision(
 
     # Only need layers with parameters in these groups
     layer_groups = [["conv1", "bn1"], "layer1", "layer2", "layer3", "layer4"]
-    layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
+    # layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
 
     image_transform = weights.transforms()
 
@@ -46,7 +46,7 @@ class ResNet18Layer(BaseModelLayer):
 
     layer_sizes = {
         "maxpool": 200704,
-        "layer1": 200704,
+        "layer1": 64, # 200704,
         "layer2": 100352,
         "layer3": 50176,
         "layer4": 25088,
@@ -64,16 +64,22 @@ class ResNet18Layer(BaseModelLayer):
             base.relu,
             base.maxpool,
         )
-        if layer_idx >= 1:
-            self.layer1 = base.layer1
-        if layer_idx >= 2:
-            self.layer2 = base.layer2
-        if layer_idx >= 3:
-            self.layer3 = base.layer3
-        if layer_idx >= 4:
-            self.layer4 = base.layer4
-        if layer_idx == 5:
-            self.avgpool = base.avgpool
+        # if layer_idx >= 1:
+        #     self.layer1 = base.layer1
+        # if layer_idx >= 2:
+        #     self.layer2 = base.layer2
+        # if layer_idx >= 3:
+        #     self.layer3 = base.layer3
+        # if layer_idx >= 4:
+        #     self.layer4 = base.layer4
+        # if layer_idx == 5:
+        #     self.avgpool = base.avgpool
+
+        self.layer1 = base.layer1
+        self.layer2 = base.layer2
+        self.layer3 = base.layer3
+        self.layer4 = base.layer4
+        self.avgpool = base.avgpool
 
         self.eval()
 
@@ -86,6 +92,7 @@ class ResNet18Layer(BaseModelLayer):
             return x
         x = self.layer1(x)
         if self.layer == "layer1":
+            x = self.avgpool(x)
             return x
         x = self.layer2(x)
         if self.layer == "layer2":
