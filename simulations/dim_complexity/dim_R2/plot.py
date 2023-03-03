@@ -21,7 +21,7 @@ def main():
     df3.plot(kind='line',x='low_dim',y='test_r2',ax=ax, label='Res18Pre')
     df4.plot(kind='line',x='low_dim',y='test_r2', color='red', ax=ax, label='Res18Pre')
     df5.plot(kind='line',x='low_dim',y='test_r2', color='green', ax=ax, label='Res18Pre')
-    df5.plot(kind='line',x='low_dim',y='test_r2', color='yellow', ax=ax, label='Res18Pre')
+    df6.plot(kind='line',x='low_dim',y='test_r2', color='yellow', ax=ax, label='Res18Pre')
 
     plt.xlabel('Number of dimensions')
     plt.ylabel('R^2')
