@@ -46,10 +46,10 @@ class ResNet18Layer(BaseModelLayer):
 
     layer_sizes = {
         "maxpool": 200704,
-        "layer1": 64, # 200704,
-        "layer2": 100352,
-        "layer3": 50176,
-        "layer4": 25088,
+        "layer1": 200704, #64
+        "layer2": 100352, #128
+        "layer3": 50176, #256
+        "layer4": 25088, #512
         "avgpool": 512,
     }
 
@@ -108,3 +108,31 @@ class ResNet18Layer(BaseModelLayer):
         if self.layer == "avgpool":
             return x
         raise ValueError(f"Invalid layer: {self.layer}")
+
+
+def get_convnext_torchvision(
+    layer: str,
+) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
+    """
+    Get the specified layer from a ResNet18 model trained on ImageNet classification.
+
+    Args:
+        layer (str): Name of the layers to retrieve from the model.
+
+    Returns:
+        tuple[BaseModelLayer, LayerGroups, ImageTransform]: A tuple containing the model,
+        layer groups for non-uniform scaling in the Fastfood transform, and image transform
+        to be applied to the input images.
+    """
+    assert layer in ConvNextLayer.permissible_layers
+    weights = ResNet18_Weights.IMAGENET1K_V1
+
+    model = ResNet18Layer(layer, weights)
+
+    # Only need layers with parameters in these groups
+    layer_groups = [["conv1", "bn1"], "layer1", "layer2", "layer3", "layer4"]
+    # layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
+
+    image_transform = weights.transforms()
+
+    return model, layer_groups, image_transform
