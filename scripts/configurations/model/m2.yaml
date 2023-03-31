@@ -1,0 +1,4 @@
+arch: vit16
+dataset: imagenet
+task: object-classification
+layer: heads

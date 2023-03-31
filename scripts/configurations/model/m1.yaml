@@ -1,0 +1,4 @@
+arch: convnext
+dataset: imagenet
+task: object-classification
+layer: avgpool

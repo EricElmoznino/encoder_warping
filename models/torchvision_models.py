@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet18, ResNet18_Weights, convnext_base, ConvNeXt_Base_Weights, vit_b_16, ViT_B_16_Weights
 from .typing import LayerGroups, ImageTransform
 from .base import BaseModelLayer
 
@@ -125,14 +125,126 @@ def get_convnext_torchvision(
         to be applied to the input images.
     """
     assert layer in ConvNextLayer.permissible_layers
-    weights = ResNet18_Weights.IMAGENET1K_V1
+    weights = ConvNeXt_Base_Weights.IMAGENET1K_V1
 
-    model = ResNet18Layer(layer, weights)
+    model = ConvNextLayer(layer, weights)
 
     # Only need layers with parameters in these groups
-    layer_groups = [["conv1", "bn1"], "layer1", "layer2", "layer3", "layer4"]
-    # layer_groups = layer_groups[: ResNet18Layer.permissible_layers.index(layer) + 1]
+    layer_groups = ["features", "avgpool"]
 
     image_transform = weights.transforms()
 
     return model, layer_groups, image_transform
+
+class ConvNextLayer(BaseModelLayer):
+
+    permissible_layers = [
+        "features",
+        "avgpool",
+    ]
+
+    layer_sizes = {
+        "features": 64, 
+        "avgpool": 1024,
+    }
+
+    def __init__(self, layer: str, weights=None) -> None:
+        super().__init__(layer)
+
+        base = convnext_base(weights=weights)
+
+        self.features = base.features
+        self.avgpool = base.avgpool
+
+        self.eval()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        if self.layer == "features":
+            return x
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        if self.layer == "avgpool":
+            return x
+        return x
+        raise ValueError(f"Invalid layer: {self.layer}")
+
+def get_vit16_torchvision(
+    layer: str,
+) -> tuple[BaseModelLayer, LayerGroups, ImageTransform]:
+    """
+    Get the specified layer from a ResNet18 model trained on ImageNet classification.
+
+    Args:
+        layer (str): Name of the layers to retrieve from the model.
+
+    Returns:
+        tuple[BaseModelLayer, LayerGroups, ImageTransform]: A tuple containing the model,
+        layer groups for non-uniform scaling in the Fastfood transform, and image transform
+        to be applied to the input images.
+    """
+    assert layer in vitLayer.permissible_layers
+    weights = ViT_B_16_Weights.IMAGENET1K_V1
+
+    model = vitLayer(layer, weights)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+
+    # Only need layers with parameters in these groups
+    layer_groups = ["class_token", "encoder", "heads"]
+
+    image_transform = weights.transforms()
+
+    return model, layer_groups, image_transform
+
+class vitLayer(BaseModelLayer):
+
+    permissible_layers = [
+        "class_token", 
+        "encoder",
+        "heads",
+    ]
+
+    layer_sizes = {
+        "class_token": 32,
+        "encoder": 64, 
+        "heads": 1000,
+    }
+
+    def __init__(self, layer: str, weights=None) -> None:
+        super().__init__(layer)
+
+        base = vit_b_16(weights=weights)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        base = base.to(device)
+
+        self._process_input = base._process_input
+        self.class_token = base.class_token
+        self.encoder = base.encoder
+        self.heads = base.heads
+
+        self.eval()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        x = x.to(device)
+        x = self._process_input(x)
+        n = x.shape[0]
+
+        # Expand the class token to the full batch
+        batch_class_token = self.class_token.expand(n, -1, -1)
+        x = torch.cat([batch_class_token, x], dim=1)
+
+        x = self.encoder(x)
+        if self.layer == "encoder":
+            return x
+
+        # Classifier "token" as used by standard language architectures
+        x = x[:, 0]
+
+        x = self.heads(x)
+        if self.layer == "heads":
+            return x
+
+        return x
+        raise ValueError(f"Invalid layer: {self.layer}")

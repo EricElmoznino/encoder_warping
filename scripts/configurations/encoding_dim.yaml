@@ -5,7 +5,7 @@ defaults:
   - _self_
 
 dims:
-  n_samples: 10
+  n_samples: 5
   max: 10000
 
 run_name:

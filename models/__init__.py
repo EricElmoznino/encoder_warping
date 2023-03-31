@@ -1,4 +1,4 @@
-from .torchvision_models import get_resnet18_torchvision
+from .torchvision_models import get_resnet18_torchvision, get_convnext_torchvision, get_vit16_torchvision
 from .base import BaseModelLayer
 from .typing import LayerGroups, ImageTransform
 
@@ -25,5 +25,9 @@ def get_model(
     """
     if arch == "resnet18" and dataset == "imagenet" and task == "object-classification":
         return get_resnet18_torchvision(layer)
+    if arch == "convnext" and dataset == "imagenet" and task == "object-classification":
+        return get_convnext_torchvision(layer)
+    if arch == "vit16" and dataset == "imagenet" and task == "object-classification":
+        return get_vit16_torchvision(layer)
     else:
         raise ValueError(f"Unknown model: arch={arch}, dataset={dataset}, task={task}")
