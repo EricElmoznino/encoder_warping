@@ -64,16 +64,6 @@ class ResNet18Layer(BaseModelLayer):
             base.relu,
             base.maxpool,
         )
-        # if layer_idx >= 1:
-        #     self.layer1 = base.layer1
-        # if layer_idx >= 2:
-        #     self.layer2 = base.layer2
-        # if layer_idx >= 3:
-        #     self.layer3 = base.layer3
-        # if layer_idx >= 4:
-        #     self.layer4 = base.layer4
-        # if layer_idx == 5:
-        #     self.avgpool = base.avgpool
 
         self.layer1 = base.layer1
         self.layer2 = base.layer2
@@ -152,6 +142,7 @@ class ConvNextLayer(BaseModelLayer):
         super().__init__(layer)
 
         base = convnext_base(weights=weights)
+        print(base)
 
         self.features = base.features
         self.avgpool = base.avgpool
@@ -165,6 +156,7 @@ class ConvNextLayer(BaseModelLayer):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         if self.layer == "avgpool":
+            print(x.shape)
             return x
         return x
         raise ValueError(f"Invalid layer: {self.layer}")
@@ -190,8 +182,16 @@ def get_vit16_torchvision(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    # Only need layers with parameters in these groups
-    layer_groups = ["class_token", "encoder", "heads"]
+    layer_groups = [
+    "class_token",
+    "conv_proj",
+    ["encoder.pos_embedding", "encoder.ln"],
+    ["encoder.layers.encoder_layer_0", "encoder.layers.encoder_layer_1", "encoder.layers.encoder_layer_2"],
+    ["encoder.layers.encoder_layer_3", "encoder.layers.encoder_layer_4", "encoder.layers.encoder_layer_5"],
+    ["encoder.layers.encoder_layer_6", "encoder.layers.encoder_layer_7", "encoder.layers.encoder_layer_8"],
+    ["encoder.layers.encoder_layer_9", "encoder.layers.encoder_layer_10", "encoder.layers.encoder_layer_11"],
+    "adp_avgpool"
+]
 
     image_transform = weights.transforms()
 
@@ -200,15 +200,13 @@ def get_vit16_torchvision(
 class vitLayer(BaseModelLayer):
 
     permissible_layers = [
-        "class_token", 
         "encoder",
-        "heads",
+        "adp_avgpool"
     ]
 
     layer_sizes = {
-        "class_token": 32,
-        "encoder": 64, 
-        "heads": 1000,
+        "encoder": 768, 
+        "adp_avgpool": 768 #1024,
     }
 
     def __init__(self, layer: str, weights=None) -> None:
@@ -221,7 +219,7 @@ class vitLayer(BaseModelLayer):
         self._process_input = base._process_input
         self.class_token = base.class_token
         self.encoder = base.encoder
-        self.heads = base.heads
+        self.adp_avgpool = nn.AdaptiveAvgPool1d(1024)
 
         self.eval()
 
@@ -242,8 +240,8 @@ class vitLayer(BaseModelLayer):
         # Classifier "token" as used by standard language architectures
         x = x[:, 0]
 
-        x = self.heads(x)
-        if self.layer == "heads":
+        # x = self.adp_avgpool(x)
+        if self.layer == "adp_avgpool":
             return x
 
         return x
